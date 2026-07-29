@@ -1,0 +1,50 @@
+﻿@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inject NavigationManager Navigation
+
+@* <AuthorizeView>
+    <Authorized>
+        Hello, @context.User.Identity?.Name!
+        <button class="nav-link btn btn-link" @onclick="BeginLogOut">Log out</button>
+    </Authorized>
+    <NotAuthorized>
+        <a href="login">Log in</a>
+
+    </NotAuthorized>
+</AuthorizeView> *@
+
+
+<AuthorizeView>
+    <Authorized>
+        <RadzenProfileMenu Click="@ProfileMenuClick">
+            <ChildContent>
+                @* <RadzenProfileMenuItem Path="profile" Icon="settings" Text="Profile" /> *@
+                @* <RadzenProfileMenuItem Path="application-users" Icon="person" Text="Users" /> *@
+                @* <RadzenProfileMenuItem Path="application-roles" Icon="security" Text="Roles" /> *@
+                <RadzenProfileMenuItem Path="#" Icon="settings" Text="Profile" />
+                <RadzenProfileMenuItem Path="#" Icon="person" Text="Users" />
+                <RadzenProfileMenuItem Path="#" Icon="security" Text="Roles" />
+                <RadzenProfileMenuItem Path="logout" Text="Logout" Value="Logout" Icon="power_settings_new" />
+            </ChildContent>
+            <Template>
+                @context.User.Identity.Name
+                <RadzenGravatar Email="@context.User.Identity.Name" />
+            </Template>
+        </RadzenProfileMenu>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+
+    public void BeginLogOut()
+    {
+        Navigation.NavigateToLogout("authentication/logout");
+    }
+
+    protected void ProfileMenuClick(RadzenProfileMenuItem args)
+    {
+        if (args.Value == "Logout")
+        {
+            // Security.Logout();
+        }
+    }
+}

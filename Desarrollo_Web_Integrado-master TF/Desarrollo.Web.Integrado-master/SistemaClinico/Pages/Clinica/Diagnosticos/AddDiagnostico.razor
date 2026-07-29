@@ -1,0 +1,160 @@
+@page "/add-diagnostico"
+@attribute [Authorize]
+
+<PageTitle>Agregar Diagnostico</PageTitle>
+<RadzenColumn SizeMD=12>
+    <RadzenAlert Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Small" AlertStyle="AlertStyle.Danger" Visible="@errorVisible">Cannot save Diagnostico</RadzenAlert>
+    <RadzenTemplateForm TItem="DiagnosticoCrearDTO" Data="@(diagnostico)" Visible="@(diagnostico != null)" Submit="@FormSubmit">
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Estado" Component="Estado" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenCheckBox @bind-Value="@(diagnostico.Estado)" Name="Estado" />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Fecha Emision" Component="FechaEmision" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenDatePicker DateFormat="dd/MM/yyyy" style="display: block; width: 100%" @bind-Value="@(diagnostico.FechaEmision)" Name="FechaEmision" />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Observacion" Component="Observacion" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(diagnostico.Observacion)" Name="Observacion" />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Historia Clinica" Component="HistoriaClinica" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenDropDown Data="@(historiaClinicasForIdHistoriaClinica)" TextProperty="@nameof(HistoriaClinica.FechaApertura)" 
+                ValueProperty="IdHistoriaClinica" AllowClear=true
+                                Placeholder="Elegir HistoriaClinica" style="display: block; width: 100%" 
+                                @bind-Value="@(diagnostico.IdHistoriaClinica)" Name="IdHistoriaClinica"
+                                Count=@historiaClinicasForIdHistoriaClinicaCount LoadData=@historiaClinicasForIdHistoriaClinicaLoadData />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+            <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Icon="save" Text="Guardar" Variant="Variant.Flat" />
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Variant="Variant.Flat" Click="@CancelButtonClick" />
+        </RadzenStack>
+    </RadzenTemplateForm>
+</RadzenColumn>
+
+@code {
+    [Inject]
+    protected IJSRuntime JSRuntime { get; set; }
+
+    [Inject]
+    protected NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    protected DialogService DialogService { get; set; }
+
+    [Inject]
+    protected TooltipService TooltipService { get; set; }
+
+    [Inject]
+    protected ContextMenuService ContextMenuService { get; set; }
+
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+    // [Inject]
+    // public dbService _dbService { get; set; }
+    [Inject]
+    public IService _service { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        diagnostico = new DiagnosticoCrearDTO();
+    }
+    protected bool errorVisible;
+    protected DiagnosticoCrearDTO diagnostico;
+
+    protected IEnumerable<HistoriaClinica> historiaClinicasForIdHistoriaClinica;
+
+
+    protected int historiaClinicasForIdHistoriaClinicaCount;
+    protected HistoriaClinica historiaClinicasForIdHistoriaClinicaValue;
+    protected async Task historiaClinicasForIdHistoriaClinicaLoadData(LoadDataArgs args)
+    {
+        try
+        {
+            // var result = await _dbService.GetHistoriaClinicas(top: args.Top, skip: args.Skip, count: args.Top != null && args.Skip != null, filter: $"contains(, '{(!string.IsNullOrEmpty(args.Filter) ? args.Filter : "")}')", orderby: $"{args.OrderBy}");
+            // historiaClinicasForIdHistoriaClinica = result.Value.AsODataEnumerable();
+            // historiaClinicasForIdHistoriaClinicaCount = result.Count;
+
+            var httpResponse = await _service.Get<List<HistoriaClinica>>($"api/Historias-Clinicas");
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                historiaClinicasForIdHistoriaClinica = httpResponse.Response;
+                historiaClinicasForIdHistoriaClinicaCount = httpResponse.Response.Count;
+            }
+
+        }
+        catch (System.Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = $"Unable to load HistoriaClinica" });
+        }
+    }
+    protected async Task FormSubmit()
+    {
+        try
+        {
+            // await _dbService.CreateDiagnostico(diagnostico);
+            // DialogService.Close(diagnostico);
+            var historiaClinica = await GetHistoriaClinica(diagnostico.IdHistoriaClinica);
+            diagnostico.HistoriaClinica = historiaClinica;
+
+            var httpResponse = await _service.Post($"api/diagnosticos", diagnostico);
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = $"Se agregó correctamente" });
+                DialogService.Close(historiaClinica);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            errorVisible = true;
+        }
+    }
+
+    protected async Task CancelButtonClick(MouseEventArgs args)
+    {
+        DialogService.Close(null);
+    }
+
+    async Task<HistoriaClinica> GetHistoriaClinica(int id)
+    {
+        try
+        {
+            var httpResponse = await _service.Get<HistoriaClinica>($"api/Historias-Clinicas/{id}");
+            if (!httpResponse.Error)
+            {
+                return httpResponse.Response;
+            }
+
+            return null;
+        }
+        catch (System.Exception ex)
+        {
+            return null;
+        }
+    }
+}

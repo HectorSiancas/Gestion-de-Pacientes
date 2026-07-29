@@ -1,0 +1,229 @@
+@page "/add-cita"
+@attribute [Authorize]
+
+<PageTitle>Agregar Cita</PageTitle>
+<RadzenColumn SizeMD=12>
+    <RadzenAlert Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Small" AlertStyle="AlertStyle.Danger" Visible="@errorVisible">Cannot save Cita</RadzenAlert>
+    <RadzenTemplateForm TItem="CitaCrearDTO" Data="@(citum)" Visible="@(citum != null)" Submit="@FormSubmit">
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Estado" Component="Estado" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(citum.Estado)" Name="Estado" />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Fecha Reserva" Component="FechaReserva" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenDatePicker DateFormat="dd/MM/yyyy" style="display: block; width: 100%" @bind-Value="@(citum.FechaReserva)" Name="FechaReserva" />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Hora" Component="Hora" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(citum.Hora)" Name="Hora" />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Observacion" Component="Observacion" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(citum.Observacion)" Name="Observacion" />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Horario Atencion" Component="HorarioAtencion" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenDropDown Data="@(horarioAtencionsForIdHorarioAtencion)" TextProperty="MyHoraInicio" ValueProperty="IdHorarioAtencion" AllowClear=true
+                                Placeholder="Elegir HorarioAtencion" style="display: block; width: 100%" @bind-Value="@(citum.IdHorarioAtencion)" Name="IdHorarioAtencion"
+                                Count=@horarioAtencionsForIdHorarioAtencionCount LoadData=@horarioAtencionsForIdHorarioAtencionLoadData />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Paciente" Component="Paciente" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenDropDown Data="@(pacientesForIdPaciente)" TextProperty="NombresApellidos" ValueProperty="IdPaciente" AllowClear=true
+                                Placeholder="Elegir Paciente" style="display: block; width: 100%" @bind-Value="@(citum.IdPaciente)" Name="IdPaciente"
+                                Count=@pacientesForIdPacienteCount LoadData=@pacientesForIdPacienteLoadData />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+            <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Icon="save" Text="Guardar" Variant="Variant.Flat" />
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Variant="Variant.Flat" Click="@CancelButtonClick" />
+        </RadzenStack>
+    </RadzenTemplateForm>
+</RadzenColumn>
+
+@code {
+    [Inject]
+    protected IJSRuntime JSRuntime { get; set; }
+
+    [Inject]
+    protected NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    protected DialogService DialogService { get; set; }
+
+    [Inject]
+    protected TooltipService TooltipService { get; set; }
+
+    [Inject]
+    protected ContextMenuService ContextMenuService { get; set; }
+
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+    // [Inject]
+    // public dbService _dbService { get; set; }
+
+    [Inject]
+    public IService _service { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        citum = new CitaCrearDTO();
+    }
+    protected bool errorVisible;
+    protected CitaCrearDTO citum;
+
+    protected IEnumerable<HorarioAtencion> horarioAtencionsForIdHorarioAtencion;
+
+    protected IEnumerable<Paciente> pacientesForIdPaciente;
+
+
+    protected int horarioAtencionsForIdHorarioAtencionCount;
+    protected HorarioAtencion horarioAtencionsForIdHorarioAtencionValue;
+    protected async Task horarioAtencionsForIdHorarioAtencionLoadData(LoadDataArgs args)
+    {
+        try
+        {
+            // var result = await _dbService.GetHorarioAtencions(top: args.Top, skip: args.Skip, count: args.Top != null && args.Skip != null, filter: $"contains(, '{(!string.IsNullOrEmpty(args.Filter) ? args.Filter : "")}')", orderby: $"{args.OrderBy}");
+            // horarioAtencionsForIdHorarioAtencion = result.Value.AsODataEnumerable();
+            // horarioAtencionsForIdHorarioAtencionCount = result.Count;
+
+            var httpResponse = await _service.Get<List<HorarioAtencion>>($"api/horarios-atencion");
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                horarioAtencionsForIdHorarioAtencion = httpResponse.Response;
+                horarioAtencionsForIdHorarioAtencionCount = httpResponse.Response.Count;
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = $"Unable to load HorarioAtencion" });
+        }
+    }
+
+    protected int pacientesForIdPacienteCount;
+    protected Paciente pacientesForIdPacienteValue;
+    protected async Task pacientesForIdPacienteLoadData(LoadDataArgs args)
+    {
+        try
+        {
+            // var result = await _dbService.GetPacientes(top: args.Top, skip: args.Skip, count: args.Top != null && args.Skip != null, filter: $"contains(ApMaterno, '{(!string.IsNullOrEmpty(args.Filter) ? args.Filter : "")}')", orderby: $"{args.OrderBy}");
+            // pacientesForIdPaciente = result.Value.AsODataEnumerable();
+            // pacientesForIdPacienteCount = result.Count;
+
+            var httpResponse = await _service.Get<List<Paciente>>($"api/pacientes");
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                pacientesForIdPaciente = httpResponse.Response.Skip(args.Skip ?? 0).Take(args.Top ?? 10);
+                pacientesForIdPacienteCount = httpResponse.Response.Count;
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = $"Unable to load Paciente" });
+        }
+    }
+    protected async Task FormSubmit()
+    {
+        try
+        {
+            // await _dbService.CreateCitum(citum);
+            // DialogService.Close(citum);
+
+            var horarioAtencion = await GetHorarioAtencion(citum.IdHorarioAtencion ?? 0);
+            citum.HorarioAtencion = horarioAtencion;
+
+            var paciente = await GetPaciente(citum.IdPaciente);
+            citum.Paciente = paciente;
+
+           
+            var httpResponse = await _service.Post($"api/citas", citum);
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = $"Se agregó correctamente" });
+                DialogService.Close(citum);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            errorVisible = true;
+        }
+    }
+
+    protected async Task CancelButtonClick(MouseEventArgs args)
+    {
+        DialogService.Close(null);
+    }
+
+
+    async Task<HorarioAtencion> GetHorarioAtencion(int id)
+    {
+        try
+        {
+            var httpResponse = await _service.Get<HorarioAtencion>($"api/horarios-atencion/{id}");
+            if (!httpResponse.Error)
+            {
+                return httpResponse.Response;
+            }
+
+            return null;
+        }
+        catch (System.Exception ex)
+        {
+            return null;
+        }
+
+    }
+    async Task<Paciente> GetPaciente(int id)
+    {
+        try
+        {
+            var httpResponse = await _service.Get<Paciente>($"api/pacientes/{id}");
+            if (!httpResponse.Error)
+            {
+                return httpResponse.Response;
+            }
+
+            return null;
+        }
+        catch (System.Exception ex)
+        {
+            return null;
+        }
+    }
+}

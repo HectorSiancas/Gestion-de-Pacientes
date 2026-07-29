@@ -1,0 +1,158 @@
+﻿<RadzenTemplateForm TItem="EmpleadoCreateDTO" Data="@(model)" Visible="@(model != null)" Submit="@FormSubmit">
+
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Nro Documento" Component="NroDocumento" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(model.NroDocumento)" Name="NroDocumento" @onblur="Onblur" />
+            <RadzenDataAnnotationValidator Component="NroDocumento" Style="position: absolute" />
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Ap Paterno" Component="ApPaterno" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(model.ApPaterno)" Name="ApPaterno" />
+            <RadzenDataAnnotationValidator Component="ApPaterno" Style="position: absolute" />
+
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Ap Materno" Component="ApMaterno" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(model.ApMaterno)" Name="ApMaterno" />
+            <RadzenDataAnnotationValidator Component="ApMaterno" Style="position: absolute" />
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Nombres" Component="Nombres" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(model.Nombres)" Name="Nombres" />
+            <RadzenDataAnnotationValidator Component="Nombres" Style="position: absolute" />
+
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Clave" Component="Clave" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(model.Clave)" Name="Clave" />
+            <RadzenDataAnnotationValidator Component="Clave" Style="position: absolute" />
+
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Estado" Component="Estado" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenCheckBox @bind-Value="@(model.Estado)" Name="Estado" />
+            <RadzenDataAnnotationValidator Component="Estado" Style="position: absolute" />
+
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Imagen" Component="Imagen" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(model.Imagen)" Name="Imagen" />
+        </RadzenColumn>
+    </RadzenRow>
+   
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Usuario" Component="Usuario" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(model.Usuario)" Name="Usuario" />
+            <RadzenDataAnnotationValidator Component="Usuario" Style="position: absolute" />
+
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Tipo Empleado" Component="TipoEmpleado" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            @*  <RadzenDropDown Data="@(TipoEmpleados)" TextProperty="Descripcion" ValueProperty="IdTipoEmpleado" AllowClear=true
+                            Placeholder="Elegir TipoEmpleado" style="display: block; width: 100%" @bind-Value="@(model.IdTipoEmpleado)" Name="IdTipoEmpleado"/> *@
+            <RadzenDropDown Data="@(tipoEmpleados)" TextProperty="Descripcion" ValueProperty="IdTipoEmpleado" AllowClear=true
+            Placeholder="Elegir TipoEmpleado" style="display: block; width: 100%" @bind-Value="@(model.IdTipoEmpleado)" Name="IdTipoEmpleado"
+            Count=@tipoEmpleadoCount LoadData=@tipoEmpleadosForIdTipoEmpleadoLoadData />
+
+            @* <RadzenDataAnnotationValidator Component="TipoEmpleado" Style="position: absolute" />        *@
+</RadzenColumn>
+    </RadzenRow>
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton ButtonStyle="@(Modificar?ButtonStyle.Warning:ButtonStyle.Primary)" ButtonType="ButtonType.Submit" Icon="save" Text="@(Modificar ? "Modificar" : "Registrar")" Variant="Variant.Flat" />
+        <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Variant="Variant.Flat" Click="@CancelButtonClick" />
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter]
+    public EmpleadoCreateDTO model { get; set; }
+
+    [Parameter]
+    public bool Modificar { get; set; }
+
+    [Parameter]
+    public EventCallback CancelButtonClick { get; set; }
+
+    [Parameter]
+    public EventCallback FormSubmit { get; set; }
+
+    [Inject]
+    public IService _service { get; set; }
+
+    [Inject]
+    public ReniecService _reniecService { get; set; }
+
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+    public List<TipoEmpleado> TipoEmpleados { get; set; } = new List<TipoEmpleado>();
+
+    protected IEnumerable<TipoEmpleado> tipoEmpleados;
+    protected int tipoEmpleadoCount;
+    protected TipoEmpleado tipoEmpleadosForIdTipoEmpleadoValue;
+    protected async Task tipoEmpleadosForIdTipoEmpleadoLoadData(LoadDataArgs args)
+    {
+        try
+        {            
+            var httpResponse = await _service.Get<List<TipoEmpleado>>($"api/tipo-empleados");
+            if (!httpResponse.Error)
+            {
+                tipoEmpleados = httpResponse.Response;
+                tipoEmpleadoCount = httpResponse.Response.Count;
+            }
+        }
+        catch (System.Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = $"Unable to load TipoEmpleado" });
+        }
+    }
+
+    async Task Onblur(object param)
+    {
+        var persona = await _reniecService.ConsumirServicioAsync(model.NroDocumento);
+        if (persona != null)
+        {
+            model.Nombres = persona.Nombres;
+            model.ApPaterno = persona.ApellidoPaterno;
+            model.ApMaterno = persona.ApellidoMaterno;
+
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = $"RENIEC OK" });
+        }
+    }
+}

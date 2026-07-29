@@ -1,0 +1,42 @@
+@page "/add-permiso"
+@attribute [Authorize]
+
+<PageTitle>Agregar Permiso</PageTitle>
+    <RadzenColumn SizeMD=12>
+        <RadzenAlert Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Small" AlertStyle="AlertStyle.Danger" Visible="@errorVisible">Cannot save Permiso</RadzenAlert>
+        <RadzenTemplateForm TItem="Permiso" Data="@(permiso)" Visible="@(permiso != null)" Submit="@FormSubmit">
+            <RadzenRow style="margin-bottom: 1rem">
+                <RadzenColumn SizeMD="3">
+                    <RadzenLabel Text="Estado" Component="Estado" style="width: 100%" />
+                </RadzenColumn>
+                <RadzenColumn SizeMD="9">
+                    <RadzenCheckBox @bind-Value="@(permiso.Estado)" Name="Estado" />
+                </RadzenColumn>
+            </RadzenRow>
+            <RadzenRow style="margin-bottom: 1rem">
+                <RadzenColumn SizeMD="3">
+                    <RadzenLabel Text="Menu" Component="Menu" style="width: 100%" />
+                </RadzenColumn>
+                <RadzenColumn SizeMD="9">
+                    <RadzenDropDown Data="@(menusForIdMenu)" TextProperty="Nombre" ValueProperty="IdMenu" AllowClear=true
+                         Placeholder="Elegir Menu" style="display: block; width: 100%" @bind-Value="@(permiso.IdMenu)" Name="IdMenu"
+                         Count=@menusForIdMenuCount LoadData=@menusForIdMenuLoadData />
+                </RadzenColumn>
+            </RadzenRow>
+            <RadzenRow style="margin-bottom: 1rem">
+                <RadzenColumn SizeMD="3">
+                    <RadzenLabel Text="Empleado" Component="Empleado" style="width: 100%" />
+                </RadzenColumn>
+                <RadzenColumn SizeMD="9">
+                    <RadzenDropDown Data="@(empleadosForIdEmpleado)" TextProperty="ApMaterno" ValueProperty="IdEmpleado" AllowClear=true
+                         Placeholder="Elegir Empleado" style="display: block; width: 100%" @bind-Value="@(permiso.IdEmpleado)" Name="IdEmpleado"
+                         Count=@empleadosForIdEmpleadoCount LoadData=@empleadosForIdEmpleadoLoadData />
+                </RadzenColumn>
+            </RadzenRow>
+          <RadzenStack  Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Icon="save" Text="Guardar" Variant="Variant.Flat" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Variant="Variant.Flat" Click="@CancelButtonClick"  />
+          </RadzenStack>
+        </RadzenTemplateForm>
+    </RadzenColumn>
+

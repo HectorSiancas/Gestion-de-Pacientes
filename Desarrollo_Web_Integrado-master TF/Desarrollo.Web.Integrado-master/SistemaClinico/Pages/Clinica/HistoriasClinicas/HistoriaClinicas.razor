@@ -1,0 +1,160 @@
+@page "/historia-clinicas"
+@attribute [Authorize(Roles = "admin")]
+
+<PageTitle>HistoriaClinicas</PageTitle>
+<RadzenStack>
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText Text="Historias Clinicas" TextStyle="TextStyle.H3" TagName="TagName.H1" style="margin: 0" />
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Icon="add_circle_outline" Text="Agregar" Click="@AddButtonClick" Variant="Variant.Flat" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn SizeMD=12>
+            <RadzenDataGrid @ref="grid0" ColumnWidth="200px" AllowFiltering="true" FilterMode="FilterMode.Advanced" AllowPaging="true" AllowSorting="true" ShowPagingSummary="true" PageSizeOptions=@(new int[] { 5, 10, 20, 30 })
+                            style="min-height: 150px" IsLoading=@isLoading
+                            PagerHorizontalAlign="HorizontalAlign.Right" PageSizeText=" por página"
+            Data="@(historiaClinicas)" LoadData="@Grid0LoadData" Count="@count" TItem="HistoriaClinica" RowSelect="@EditRow">
+                <Columns>
+                    <RadzenDataGridColumn TItem="HistoriaClinica" Property="IdHistoriaClinica" Title="Id Historia Clinica">
+                    </RadzenDataGridColumn>
+                   @*  <RadzenDataGridColumn TItem="HistoriaClinica" Property="Estado" Title="Estado">
+                    </RadzenDataGridColumn> *@
+                    <RadzenDataGridColumn TItem="HistoriaClinica" Property="FechaApertura" Title="Fecha Apertura">
+                    </RadzenDataGridColumn>
+                   @*  <RadzenDataGridColumn TItem="HistoriaClinica" Property="Paciente.ApMaterno" Title="Paciente">
+                    </RadzenDataGridColumn> *@
+                    <RadzenDataGridColumn TItem="HistoriaClinica" Title="Paciente">
+                        <Template>
+                            @context.Paciente.ApPaterno @context.Paciente.ApMaterno @context.Paciente.Nombres
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="HistoriaClinica" Filterable="false" Sortable="false" Width="70px" TextAlign="TextAlign.Center">
+                        <Template Context="historiaClinica">
+
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Size="ButtonSize.Medium"
+                                          Shade="Shade.Lighter" Variant="Variant.Flat"
+                                          Click=@(args => GridDeleteButtonClick(args, historiaClinica)) @onclick:stopPropagation="true" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+                <LoadingTemplate>
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Size="ProgressBarCircularSize.Small" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                </LoadingTemplate>
+                <PagingSummaryTemplate>
+                    Página @context.CurrentPage de @context.NumberOfPages <b>(@context.TotalCount registros)</b>
+                </PagingSummaryTemplate>
+            </RadzenDataGrid>
+
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenStack>
+
+@code {
+    [Inject]
+    protected IJSRuntime JSRuntime { get; set; }
+
+    [Inject]
+    protected NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    protected DialogService DialogService { get; set; }
+
+    [Inject]
+    protected TooltipService TooltipService { get; set; }
+
+    [Inject]
+    protected ContextMenuService ContextMenuService { get; set; }
+
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+
+    [Inject]
+    public dbService _dbService { get; set; }
+    [Inject]
+    public IService _service { get; set; }
+    protected IEnumerable<HistoriaClinica> historiaClinicas;
+
+    protected RadzenDataGrid<HistoriaClinica> grid0;
+    protected int count;
+    bool isLoading = false;
+    protected async Task Grid0LoadData(LoadDataArgs args)
+    {
+        isLoading = true;
+        try
+        {
+            //var result = await _dbService.GetHistoriaClinicas(filter: $"{args.Filter}", expand: "Paciente", orderby: $"{args.OrderBy}", top: args.Top, skip: args.Skip, count:args.Top != null && args.Skip != null);
+            //historiaClinicas = result.Value.AsODataEnumerable();
+            //count = result.Count;
+            var httpResponse = await _service.Get<List<HistoriaClinica>>($"api/Historias-Clinicas");
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                historiaClinicas = httpResponse.Response;
+                count = httpResponse.Response.Count;
+            }
+        }
+        catch (System.Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = $"Unable to load HistoriaClinicas" });
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    protected async Task AddButtonClick(MouseEventArgs args)
+    {
+        await DialogService.OpenAsync<AddHistoriaClinica>("Agregar HistoriaClinica", null);
+        await grid0.Reload();
+    }
+
+    protected async Task EditRow(HistoriaClinica args)
+    {
+        await DialogService.OpenAsync<EditHistoriaClinica>("Edit HistoriaClinica", new Dictionary<string, object> { { "IdHistoriaClinica", args.IdHistoriaClinica } });
+        await grid0.Reload();
+    }
+
+    protected async Task GridDeleteButtonClick(MouseEventArgs args, HistoriaClinica historiaClinica)
+    {
+        try
+        {
+            if (await DialogService.Confirm("¿Está seguro de que desea eliminar este registro?", "Confirmar", new ConfirmOptions() { OkButtonText = "OK", CancelButtonText = "CANCELAR" }) == true)
+            {
+                // var deleteResult = await _dbService.DeleteHistoriaClinica(idHistoriaClinica: historiaClinica.IdHistoriaClinica);
+
+                // if (deleteResult != null)
+                // {
+                //     await grid0.Reload();
+                // }
+                var httpResponse = await _service.Delete($"api/Historias-Clinicas/{historiaClinica.IdHistoriaClinica}");
+                if (httpResponse.Error)
+                {
+                    NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+                }
+                else
+                {
+                    NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = $"Se eliminó correctamente" });
+                    await grid0.Reload();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = $"Error",
+                Detail = $"No se puede eliminar HistoriaClinica"
+            });
+        }
+    }
+}

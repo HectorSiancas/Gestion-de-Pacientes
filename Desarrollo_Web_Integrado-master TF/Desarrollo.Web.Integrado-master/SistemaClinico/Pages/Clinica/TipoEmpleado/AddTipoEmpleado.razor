@@ -1,0 +1,49 @@
+@page "/add-tipo-empleado"
+@attribute [Authorize]
+
+<PageTitle>Agregar TipoEmpleado</PageTitle>
+<RadzenColumn SizeMD=12>
+    <RadzenAlert Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Small" AlertStyle="AlertStyle.Danger" Visible="@errorVisible">Cannot save TipoEmpleado</RadzenAlert>
+    <FormularioTipoEmpleado model="tipoEmpleado" FormSubmit="FormSubmit" CancelButtonClick="Cancel" />
+</RadzenColumn>
+
+
+@code {
+    [Inject]
+    public IService _service { get; set; }
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+    [Inject]
+    protected DialogService DialogService { get; set; }
+
+    private TipoEmpleadoDTO tipoEmpleado = new TipoEmpleadoDTO();
+    protected bool errorVisible; 
+    
+
+    protected async Task FormSubmit()
+    {
+        try
+        {
+            var httpResponse = await _service.Post($"api/tipo-empleados", tipoEmpleado);
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = $"Se agregó correctamente" });
+                DialogService.Close(tipoEmpleado);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorVisible = true;
+        }
+    }
+
+    protected async Task Cancel()
+    {
+        DialogService.Close(null);
+    }
+}
+

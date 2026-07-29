@@ -1,0 +1,201 @@
+﻿@using Shared.Enums
+<RadzenTemplateForm TItem="PacienteCreateDTO" Data="@(model)" Visible="@(model != null)" Submit="@FormSubmit" InvalidSubmit=@OnInvalidSubmit>
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Nro Documento" Component="NroDocumento" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(model.NroDocumento)" Name="NroDocumento" @onblur="Onblur" />
+            <RadzenDataAnnotationValidator Component="NroDocumento" Style="position: absolute" />
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Ap Paterno" Component="ApPaterno" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(model.ApPaterno)" Name="ApPaterno" />
+            <RadzenDataAnnotationValidator Component="ApPaterno" Style="position: absolute" />
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Ap Materno" Component="ApMaterno" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(model.ApMaterno)" Name="ApMaterno" />
+            <RadzenDataAnnotationValidator Component="ApMaterno" Style="position: absolute" />
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Nombres" Component="Nombres" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(model.Nombres)" Name="Nombres" />
+            <RadzenDataAnnotationValidator Component="Nombres" Style="position: absolute" />
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Correo" Component="Direccion" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(model.Direccion)" Name="Direccion" />
+            <RadzenDataAnnotationValidator Component="Direccion" Style="position: absolute" />
+        </RadzenColumn>
+    </RadzenRow>
+   @*  <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Edad" Component="Edad" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenNumeric style="display: block; width: 100%" @bind-Value="@(model.Edad)" Name="Edad" />
+            <RadzenDataAnnotationValidator Component="Edad" Style="position: absolute" />
+        </RadzenColumn>
+    </RadzenRow> *@
+
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Telefono" Component="Telefono" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(model.Telefono)" Name="Telefono" />
+            <RadzenDataAnnotationValidator Component="Telefono" Style="position: absolute" />
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Estado" Component="Estado" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenCheckBox @bind-Value="@(model.Estado)" Name="Estado" />
+            <RadzenDataAnnotationValidator Component="Estado" Style="position: absolute" />
+        </RadzenColumn>
+    </RadzenRow>
+    @* <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Imagen" Component="Imagen" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(model.Imagen)" Name="Imagen" />
+        </RadzenColumn>
+    </RadzenRow> *@
+
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Sexo" Component="Genero" style="width: 100%" />
+        </RadzenColumn>
+        @* <RadzenColumn SizeMD="9">
+			<RadzenTextBox style="display: block; width: 100%" @bind-Value="@(model.Sexo)" Name="Sexo" />
+			<RadzenDataAnnotationValidator Component="Sexo" Style="position: absolute" />
+		</RadzenColumn> *@
+        @* <RadzenColumn SizeMD="9">
+			<RadzenDropDown @bind-Value="model.SexoEnum"
+							Data="@Enum.GetValues(typeof(SexoEnum))"
+							Name="Sexo"
+							TValue="SexoEnum"
+							Style="width:100%" />
+			<RadzenDataAnnotationValidator Component="Sexo" Style="position: absolute" />
+		</RadzenColumn> *@
+
+        @* <RadzenDropDown Data="@(horarioAtencionsForIdHorarioAtencion)" TextProperty="MyHoraInicio" ValueProperty="IdHorarioAtencion" AllowClear=true
+						Placeholder="Elegir HorarioAtencion" style="display: block; width: 100%" @bind-Value="@(citum.IdHorarioAtencion)" Name="IdHorarioAtencion"
+						Count=@horarioAtencionsForIdHorarioAtencionCount LoadData=@horarioAtencionsForIdHorarioAtencionLoadData /> *@
+
+        @* <RadzenColumn SizeMD="9">
+			<RadzenDropDown @bind-Value="model.SexoEnum"
+							Data="@Enum.GetValues(typeof(SexoEnum))"
+							Name="Sexo"
+							TextProperty=""
+							TValue="SexoEnum"
+							Style="width:100%" />
+			<RadzenDataAnnotationValidator Component="Sexo" Style="position: absolute" />
+		</RadzenColumn> *@
+        <RadzenColumn SizeMD="9">
+            <RadzenDropDown Data="@opcionesSexo"
+                            TextProperty="Text"
+                            ValueProperty="Value"
+                            @bind-Value="model.Sexo"
+                            AllowClear=true
+                            Placeholder="Elegir genero"
+                            style="display: block; width: 100%"
+                            Name="Sexo" />
+            <RadzenDataAnnotationValidator Component="Sexo" Style="position: absolute" />
+        </RadzenColumn>
+    </RadzenRow>
+    
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton ButtonStyle="@(Modificar? ButtonStyle.Warning: ButtonStyle.Primary)" ButtonType="ButtonType.Submit" Icon="save" Text="@(Modificar ? "Modificar" : "Registrar")" Variant="Variant.Flat" />
+        <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Variant="Variant.Flat" Click="@CancelButtonClick" />
+    </RadzenStack>
+</RadzenTemplateForm>
+
+
+@code {
+    [Parameter]
+    public PacienteCreateDTO model { get; set; }
+
+    [Parameter]
+    public bool Modificar { get; set; }
+
+    [Parameter]
+    public EventCallback CancelButtonClick { get; set; }
+
+    [Parameter]
+    public EventCallback FormSubmit { get; set; }
+
+    [Inject]
+    public ReniecService _reniecService { get; set; }
+
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+
+
+    void OnInvalidSubmit(FormInvalidSubmitEventArgs args)
+    {
+
+    }
+
+    public string dniAnterior { get; set; }
+    // protected override void OnInitialized()
+    // {
+    //     dniAnterior = model.NroDocumento;
+    // }
+
+    protected override void OnParametersSet()
+    {
+        // base.OnParametersSet();
+        dniAnterior = model.NroDocumento;
+    }
+    async Task Onblur(object param)
+    {
+        var dniActual = model.NroDocumento?.Trim();
+        if (dniActual == dniAnterior)        
+            return;      
+
+        dniAnterior = dniActual;
+        var persona = await _reniecService.ConsumirServicioAsync(model.NroDocumento);
+        if (persona != null)
+        {
+            model.Nombres = persona.Nombres;
+            model.ApPaterno = persona.ApellidoPaterno;
+            model.ApMaterno = persona.ApellidoMaterno;
+
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = $"RENIEC OK" });
+        }
+    }
+
+    private List<SexoOption> opcionesSexo = new()
+    {
+        new SexoOption { Text = "Masculino", Value = "M" },
+        new SexoOption { Text = "Femenino", Value = "F" }
+    };
+
+    private class SexoOption
+    {
+        public string Text { get; set; }
+        public string Value { get; set; }
+    }
+}

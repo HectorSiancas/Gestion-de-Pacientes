@@ -1,0 +1,228 @@
+﻿@layout LoginLayout
+@page "/login"
+@using SistemaClinico.Auth
+@using SistemaClinico.Services
+@using System.ComponentModel.DataAnnotations
+@using System.Text.Json
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@inject DialogService DialogService
+@inject ContextMenuService ContextMenuService
+@inject TooltipService TooltipService
+@inject NotificationService NotificationService
+@inject NavigationManager navigationManager
+@inject ILoginService loginService
+
+<PageTitle>Login</PageTitle>
+<RadzenText Text="Login" TextStyle="Radzen.Blazor.TextStyle.H5" class="mb-4" TagName="Radzen.Blazor.TagName.H2" />
+<RadzenRow>
+    <RadzenColumn SizeMD="12">
+        @* <RadzenTemplateForm Action="@($"account/login?redirectUrl={redirectUrl}")" Data="@("login")" Method="post"> *@
+        @*  <RadzenTemplateForm TItem="Model" Data=@model Submit=@OnSubmit InvalidSubmit=@OnInvalidSubmit>
+            <RadzenAlert Shade="Radzen.Shade.Lighter" Variant="Radzen.Variant.Flat" Size="Radzen.AlertSize.Small" AlertStyle="Radzen.AlertStyle.Danger" Visible="@errorVisible">@error</RadzenAlert>
+            <RadzenAlert Shade="Radzen.Shade.Lighter" Variant="Radzen.Variant.Flat" Size="Radzen.AlertSize.Small" AlertStyle="Radzen.AlertStyle.Info" Visible="@infoVisible">@info</RadzenAlert>
+            <RadzenLogin AllowResetPassword="false" AllowRegister="false" />
+        </RadzenTemplateForm> *@
+
+
+        <RadzenTemplateForm TItem="Model" Data=@model Submit=@OnSubmit InvalidSubmit=@OnInvalidSubmit>
+            @* class="rz-p-4 rz-p-md-12" *@
+            <RadzenStack Gap="1.5rem">
+                <RadzenRow AlignItems="AlignItems.Center" RowGap="0.25rem">
+                    <RadzenColumn Size="12" SizeXS="4" SizeSM="12" SizeMD="4">
+                        <RadzenLabel Text="Username" Component="Username" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeXS="8" SizeSM="12" SizeMD="8">
+                        <RadzenTextBox style="display: block" Name="Username" Placeholder="Usuario..." @bind-Value=@model.Username class="rz-w-100" />
+                        <RadzenDataAnnotationValidator Component="Username" Popup=@popup Style="position: absolute" />
+                    </RadzenColumn>
+                </RadzenRow>
+                <RadzenRow AlignItems="AlignItems.Center" RowGap="0.25rem">
+                    <RadzenColumn Size="12" SizeXS="4" SizeSM="12" SizeMD="4">
+                        <RadzenLabel Text="Password" Component="Password" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeXS="8" SizeSM="12" SizeMD="8">
+                        <RadzenPassword style="display: block" Name="Password" Placeholder="Contraseña..." @bind-Value=@model.Password class="rz-w-100" aria-label="enter password" />
+                        <RadzenDataAnnotationValidator Component="Password" Popup=@popup Style="position: absolute" />
+                    </RadzenColumn>
+                </RadzenRow>
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" Offset="0" SizeXS="8" OffsetXS="4" SizeSM="12" OffsetSM="0" SizeMD="8" OffsetMD="4">
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Login"></RadzenButton>
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenStack>
+        </RadzenTemplateForm>
+
+
+        @* <RadzenTemplateForm TItem="Model" Data=@model Submit=@OnSubmit InvalidSubmit=@OnInvalidSubmit>
+            <RadzenFieldset Text="Personal information">
+                <RadzenStack Gap="2rem" class="rz-p-4 rz-p-md-12">
+                    <RadzenRow AlignItems="AlignItems.Center" RowGap="0.25rem">
+                        <RadzenColumn Size="12" SizeMD="4" class="rz-text-align-start rz-text-align-md-end">
+                            <RadzenLabel Text="Username" Component="Username" />
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="8">
+                            <RadzenTextBox style="display: block" Name="Username" @bind-Value=@model.Username class="rz-w-100" />
+                            <RadzenDataAnnotationValidator Component="Username" Popup=@popup Style="position: absolute" />
+                        </RadzenColumn>
+                    </RadzenRow>
+                    <RadzenRow AlignItems="AlignItems.Center" RowGap="0.25rem">
+                        <RadzenColumn Size="12" SizeMD="4" class="rz-text-align-start rz-text-align-md-end">
+                            <RadzenLabel Text="Password" Component="Password" />
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="8">
+                            <RadzenPassword style="display: block" Name="Password" Placeholder="Enter password..." @bind-Value=@model.Password class="rz-w-100" aria-label="enter password" />
+                            <RadzenDataAnnotationValidator Component="Password" Popup=@popup Style="position: absolute" />
+                        </RadzenColumn>
+                    </RadzenRow>
+                    <RadzenRow AlignItems="AlignItems.Center" RowGap="0.25rem">
+                        <RadzenColumn Size="12" SizeMD="4" class="rz-text-align-start rz-text-align-md-end">
+                            <RadzenLabel Text="Confirm Password" Component="ConfirmPassword" />
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="8">
+                            <RadzenPassword style="display: block" Name="ConfirmPassword" Placeholder="Confirm password..." @bind-Value=@model.ConfirmPassword class="rz-w-100" aria-label="confirm password" />
+                            <RadzenDataAnnotationValidator Component="ConfirmPassword" Popup=@popup Style="position: absolute" />
+                        </RadzenColumn>
+                    </RadzenRow>
+                    <RadzenRow AlignItems="AlignItems.Center" class="rz-mt-4">
+                        <RadzenColumn Size="12" Offset="0" SizeMD="8" OffsetMD="4">
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="Submit"></RadzenButton>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenStack>
+            </RadzenFieldset>
+        </RadzenTemplateForm> *@
+
+
+    </RadzenColumn>
+</RadzenRow>
+@code {
+    protected string redirectUrl;
+    protected string error;
+    protected string info;
+    protected bool errorVisible;
+    protected bool infoVisible;
+
+    // [Inject]
+    // protected SecurityService Security { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var query = System.Web.HttpUtility.ParseQueryString(new Uri(NavigationManager.ToAbsoluteUri(NavigationManager.Uri).ToString()).Query);
+
+        error = query.Get("error");
+
+        info = query.Get("info");
+
+        redirectUrl = query.Get("redirectUrl");
+
+        errorVisible = !string.IsNullOrEmpty(error);
+
+        infoVisible = !string.IsNullOrEmpty(info);
+    }
+
+
+    class Model
+    {
+        [Required]
+        [StringLength(15, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long", MinimumLength = 3)]
+        public string Username { get; set; }
+
+        [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long", MinimumLength = 1)]
+        [DataType(DataType.Password)]
+        [Display(Name = "Password")]
+        public string Password { get; set; }
+
+        // [DataType(DataType.Password)]
+        // [Display(Name = "Confirm password")]
+        // [Compare("Password", ErrorMessage = "The password and confirmation password do not match")]
+        // public string ConfirmPassword { get; set; }
+    }
+
+    bool popup;
+
+    Model model = new Model();
+    // EventConsole console;
+    [Inject]
+    public IService _service { get; set; }
+
+    //  async void OnSubmit2(Model model)
+    // {
+    //     var httpResponse = await _service.Post<EmpleadoCreateDTO>($"api/auth/login");
+    //     if (httpResponse.Error)
+    //     {
+    //         NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+    //     }
+    //     else
+    //     {
+    //         // empleado = httpResponse.Response;
+    //         // empleado.IdTipoEmpleado = httpResponse.Response.TipoEmpleado.IdTipoEmpleado;
+    //     }
+    // }
+
+    async void OnSubmit(Model model)
+    {
+        // console.Log($"Submit: {JsonSerializer.Serialize(model, new JsonSerializerOptions() { WriteIndented = true })}");
+
+
+        if (model.Username == "admin" && model.Password == "admin")
+        {
+            await loginService.Login(new UserToken() { Token = model.Username });
+            navigationManager.NavigateTo("");
+        }
+        else if (model.Username == "user" && model.Password == "user")
+        {
+            await loginService.Login(new UserToken() { Token = model.Username });
+            navigationManager.NavigateTo("");
+        }
+        else
+        {
+            var notification = new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Resumen de errores",
+                    Detail = "usuario o contraseña incorrecto",
+                    Duration = 4000
+                };
+
+            NotificationService.Notify(notification);
+        }
+    }
+
+    void OnInvalidSubmit(FormInvalidSubmitEventArgs args)
+    {
+        var ff = JsonSerializer.Serialize(model, new JsonSerializerOptions() { WriteIndented = true });
+
+        // console.Log($"InvalidSubmit: {JsonSerializer.Serialize(args, new JsonSerializerOptions() { WriteIndented = true })}");
+    }
+
+
+    // async Task OnSubmit(Model model)
+    // {
+    //     // Security.Login();
+
+    //     await loginService.Login(new UserToken(){Token=model.Usuario});
+    //     navigationManager.NavigateTo("");
+
+    //     // Log("Submit", JsonSerializer.Serialize(model, new JsonSerializerOptions() { WriteIndented = true }));
+    //     var notification = new NotificationMessage
+    //         {
+    //             Style = "position: absolute; inset-inline-start: -1000px;",
+    //             Severity = NotificationSeverity.Success,
+    //             Summary = "Success Summary",
+    //             Detail = "Success Detail",
+    //             Duration = 4000
+    //         };
+
+    //     // Security.Login(model.Password, model.RepeatPassword);
+
+    //     NotificationService.Notify(notification);
+    // }
+
+    // void OnInvalidSubmit(FormInvalidSubmitEventArgs args)
+    // {
+    //     // Log("InvalidSubmit", JsonSerializer.Serialize(args, new JsonSerializerOptions() { WriteIndented = true }));
+    // }
+}

@@ -1,0 +1,38 @@
+﻿<RadzenTemplateForm TItem="TipoEmpleadoDTO" Data="@(model)" Visible="@(model != null)" Submit="@FormSubmit">
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Descripcion" Component="Descripcion" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(model.Descripcion)" Name="Descripcion" />
+            <RadzenDataAnnotationValidator Component="Descripcion" Style="position: absolute" />
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow style="margin-bottom: 1rem">
+        <RadzenColumn SizeMD="3">
+            <RadzenLabel Text="Estado" Component="Estado" style="width: 100%" />
+        </RadzenColumn>
+        <RadzenColumn SizeMD="9">
+            <RadzenCheckBox @bind-Value="@(model.Estado)" Name="Estado" />
+            <RadzenDataAnnotationValidator Component="Estado" Style="position: absolute" />
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton ButtonStyle="@(Modificar?ButtonStyle.Warning:ButtonStyle.Primary)" ButtonType="ButtonType.Submit" Icon="save" Text="@(Modificar ? "Modificar" : "Registrar")" Variant="Variant.Flat" />
+        <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Variant="Variant.Flat" Click="@CancelButtonClick" />
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {    
+    [Parameter]
+    public TipoEmpleadoDTO model { get; set; }
+
+    [Parameter]
+    public bool Modificar { get; set; }
+
+    [Parameter]
+    public EventCallback CancelButtonClick { get; set; }
+
+    [Parameter]
+    public EventCallback FormSubmit { get; set; }   
+}

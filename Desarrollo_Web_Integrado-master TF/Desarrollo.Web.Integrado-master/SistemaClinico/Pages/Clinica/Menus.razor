@@ -1,0 +1,51 @@
+@page "/menus"
+@attribute [Authorize]
+
+<PageTitle>Menus</PageTitle>
+<RadzenStack>
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText Text="Menus" TextStyle="TextStyle.H3" TagName="TagName.H1" style="margin: 0" />
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Icon="add_circle_outline" Text="Agregar" Click="@AddButtonClick" Variant="Variant.Flat" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+      <RadzenColumn SizeMD=12>
+        <RadzenDataGrid @ref="grid0" ColumnWidth="200px"   AllowFiltering="true" FilterMode="FilterMode.Advanced" AllowPaging="true" AllowSorting="true" ShowPagingSummary="true" PageSizeOptions=@(new int[]{5, 10, 20, 30})
+            Data="@(menus)" LoadData="@Grid0LoadData" Count="@count" TItem="Menu" RowSelect="@EditRow">
+            <Columns>
+                <RadzenDataGridColumn TItem="Menu" Property="IdMenu" Title="Id Menu">
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Menu" Property="Estado" Title="Estado">
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Menu" Property="IsSubmenu" Title="Is Submenu">
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Menu" Property="Nombre" Title="Nombre">
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Menu" Property="Orden" Title="Orden">
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Menu" Property="Show" Title="Show">
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Menu" Property="Url" Title="Url">
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Menu" Property="Menu1.Nombre" Title="Menu1">
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Menu" Filterable="false" Sortable="false" Width="70px" TextAlign="TextAlign.Center">
+                    <Template Context="menu">
+
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Size="ButtonSize.Medium"
+                            Shade="Shade.Lighter" Variant="Variant.Flat"
+                            Click=@(args => GridDeleteButtonClick(args, menu)) @onclick:stopPropagation="true" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+
+        </RadzenDataGrid>
+
+    </RadzenColumn>
+  </RadzenRow>
+</RadzenStack>

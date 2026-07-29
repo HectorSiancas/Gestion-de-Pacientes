@@ -1,0 +1,279 @@
+﻿@page "/"
+@using System.Globalization
+@attribute [Authorize]
+@inject NavigationManager NavigationManager
+
+
+<PageTitle>Home</PageTitle>
+
+@* <h1>Hello, world!</h1>
+
+<div class="alert alert-warning" role="alert">
+    Before authentication will function correctly, you must configure your provider details in <code>Program.cs</code>
+</div>
+
+Welcome to your new app.
+
+
+<AuthorizeView>
+    <Authorized>
+        <p>Estas autenticado</p>
+    </Authorized>
+    <NotAuthorized>
+        <p>No estas autenticado</p>
+    </NotAuthorized>
+</AuthorizeView> *@
+
+<RadzenRow Gap="10" RowGap="5">
+    <!-- Panel de Bienvenida -->
+@*     <RadzenColumn Size="12">
+        <RadzenText Text="Bienvenidos " TextStyle="Radzen.Blazor.TextStyle.DisplayH2" TagName="Radzen.Blazor.TagName.H1" class="text-center"></RadzenText>
+        <RadzenText Text="Gestiona y visualiza las métricas clave de la clínica desde aquí." TextStyle="Radzen.Blazor.TextStyle.Body1" TagName="Radzen.Blazor.TagName.P" class="mt-4 text-center" Style="font-size: 20px; line-height: 24px;"></RadzenText>
+    </RadzenColumn> *@
+
+    <!-- Estadísticas Generales -->
+    <RadzenColumn Size="12">
+        <h2 class="text-center" style="color: #264653;">Estadísticas de la Clínica</h2>
+        <RadzenRow>
+            <!-- Citas Agendadas -->
+            <RadzenColumn Size="12" SizeMD="4">
+                <RadzenCard Style="margin-top: 40px; padding: 20px;">
+                    <RadzenText Text="Citas Agendadas" TextStyle="Radzen.Blazor.TextStyle.H5" TagName="Radzen.Blazor.TagName.H3" class="text-center" />
+                    <RadzenText Text="320" TextStyle="Radzen.Blazor.TextStyle.Subtitle1" TagName="Radzen.Blazor.TagName.H2" class="text-center" Style="color: #2A9D8F;" />
+                    <RadzenIcon Icon="event" Style="font-size: 40px; display: block; margin: 0 auto; color: #2A9D8F;" />
+                </RadzenCard>
+            </RadzenColumn>
+
+            <!-- Pacientes Atendidos -->
+            <RadzenColumn Size="12" SizeMD="4">
+                <RadzenCard Style="margin-top: 40px; padding: 20px;">
+                    <RadzenText Text="Pacientes Atendidos Este Mes" TextStyle="Radzen.Blazor.TextStyle.H5" TagName="Radzen.Blazor.TagName.H3" class="text-center" />
+                    <RadzenText Text="450" TextStyle="Radzen.Blazor.TextStyle.Subtitle1" TagName="Radzen.Blazor.TagName.H2" class="text-center" Style="color: #E76F51;" />
+                    <RadzenIcon Icon="person" Style="font-size: 40px; display: block; margin: 0 auto; color: #E76F51;" />
+                </RadzenCard>
+            </RadzenColumn>
+
+            <!-- Servicios Activos -->
+            <RadzenColumn Size="12" SizeMD="4">
+                <RadzenCard Style="margin-top: 40px; padding: 20px;">
+                    <RadzenText Text="Servicios Activos" TextStyle="Radzen.Blazor.TextStyle.H5" TagName="Radzen.Blazor.TagName.H3" class="text-center" />
+                    <RadzenText Text="15" TextStyle="Radzen.Blazor.TextStyle.Subtitle1" TagName="Radzen.Blazor.TagName.H2" class="text-center" Style="color: #264653;" />
+                    <RadzenIcon Icon="local_hospital" Style="font-size: 40px; display: block; margin: 0 auto; color: #264653;" />
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenColumn>
+
+    <!-- Gráficos de Producción -->
+    <RadzenColumn Size="12" class="mt-5">
+        <h2 class="text-center" style="color: #264653;">Gráficos de Producción</h2>
+        <RadzenRow>
+            <!-- Gráfico de Citas por Día -->
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenCard Style="margin-top: 40px; padding: 20px;">
+                    <RadzenText Text="Citas por Día" TextStyle="Radzen.Blazor.TextStyle.H5" TagName="Radzen.Blazor.TagName.H2" class="text-center" />
+                    @* <RadzenChart Style="height: 300px;" TItem="Cita">
+                        <RadzenChartSeries Name="Citas Diarias" Type="Radzen.Blazor.ChartType.Column" XProperty="Fecha" YProperty="Cantidad" Data="@citasPorDia" />
+                    </RadzenChart> *@
+                    <RadzenChart ColorScheme="ColorScheme.Pastel">
+                        @* <RadzenColumnSeries Data="@revenue2024" CategoryProperty="Quarter" Title="2024" LineType="LineType.Dashed" ValueProperty="Revenue">
+                            <RadzenSeriesDataLabels Visible="true" />
+                        </RadzenColumnSeries> *@
+                        @* <RadzenColumnSeries Data="@revenue2023" CategoryProperty="Quarter" Title="2023" ValueProperty="Revenue">
+                            <RadzenSeriesDataLabels Visible="true" />
+                        </RadzenColumnSeries> *@
+
+
+                        <RadzenColumnSeries Data="@citasPorDiaCardiología" CategoryProperty="Fecha" Title="Cardiología" LineType="LineType.Dashed" ValueProperty="Cantidad">
+                            <RadzenSeriesDataLabels Visible="true" />
+                        </RadzenColumnSeries>
+
+                        <RadzenColumnSeries Data="@citasPorDiaPediatría" CategoryProperty="Fecha" Title="Pediatría" ValueProperty="Cantidad">
+                            <RadzenSeriesDataLabels Visible="true" />
+                        </RadzenColumnSeries>
+
+                        <RadzenColumnSeries Data="@citasPorDiaGinecología" CategoryProperty="Fecha" Title="Ginecología" ValueProperty="Cantidad">
+                            <RadzenSeriesDataLabels Visible="true" />
+                        </RadzenColumnSeries>
+
+                        <RadzenColumnSeries Data="@citasPorDiaMedicinaGeneral" CategoryProperty="Fecha" Title="Medicina General" ValueProperty="Cantidad">
+                            <RadzenSeriesDataLabels Visible="true" />
+                        </RadzenColumnSeries>
+
+
+                        <RadzenColumnOptions Radius="5" />
+                        @* <RadzenLegend Position="LegendPosition.Bottom"   /> *@
+                        @* <RadzenValueAxis Formatter="@FormatAsUSD">
+                            <RadzenGridLines Visible="true" />
+                            <RadzenAxisTitle Text="Revenue in USD" />
+                        </RadzenValueAxis> *@
+                    </RadzenChart>
+                </RadzenCard>
+            </RadzenColumn>
+
+            <!-- Gráfico de Pacientes por Especialidad -->
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenCard Style="margin-top: 40px; padding: 20px;">
+                    <RadzenText Text="Pacientes por Especialidad" TextStyle="Radzen.Blazor.TextStyle.H5" TagName="Radzen.Blazor.TagName.H3" class="text-center" />
+                   @*  <RadzenChart Style="height: 300px;" TItem="Especialidad">
+                        <RadzenChartSeries Name="Pacientes por Especialidad" Type="Radzen.Blazor.ChartType.Pie" CategoryProperty="Especialidad" ValueProperty="Cantidad" Data="@pacientesPorEspecialidad" />
+                    </RadzenChart> *@
+
+                    <RadzenChart ColorScheme="ColorScheme.Pastel">
+                        <RadzenPieSeries Data="@pacientesPorEspecialidad" Title="Especialidad" CategoryProperty="Especialidadd" ValueProperty="Cantidad">
+                            <RadzenSeriesDataLabels Visible="false" />
+                        </RadzenPieSeries>
+                    </RadzenChart>
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenColumn>
+
+    <!-- Botón para ir a la gestión -->
+
+   @*  <RadzenColumn Size="12" class="text-center mt-5">
+        <RadzenButton Text="Ir a la Gestión de Citas y Pacientes" Icon="settings" Style="background-color: #264653; color: white;" @onclick="IrAGestion" />
+    </RadzenColumn> *@
+
+</RadzenRow>
+
+@code {
+    // Datos de ejemplo para los gráficos
+    string FormatAsUSD(object value)
+    {
+        return ((double)value).ToString("C0", CultureInfo.CreateSpecificCulture("en-US"));
+    }
+    class DataItem
+    {
+        public string Quarter { get; set; }
+        public double Revenue { get; set; }
+    }
+    DataItem[] revenue2023 = new DataItem[] {
+        new DataItem
+        {
+            Quarter = "Q1",
+            Revenue = 234000
+        },
+        new DataItem
+        {
+            Quarter = "Q2",
+            Revenue = 284000
+        },
+        new DataItem
+        {
+            Quarter = "Q3",
+            Revenue = 274000
+        },
+        new DataItem
+        {
+            Quarter = "Q4",
+            Revenue = 294000
+        },
+    };
+
+    DataItem[] revenue2024 = new DataItem[] {
+        new DataItem
+        {
+            Quarter = "Q1",
+            Revenue = 254000
+        },
+        new DataItem
+        {
+            Quarter = "Q2",
+            Revenue = 324000
+        },
+        new DataItem
+        {
+            Quarter = "Q3",
+            Revenue = 354000
+        },
+        new DataItem
+        {
+            Quarter = "Q4",
+            Revenue = 394000
+        },
+
+    };
+
+    DataItem[] revenue = new DataItem[] {
+        new DataItem
+        {
+            Quarter = "Q1",
+            Revenue = 30000
+        },
+        new DataItem
+        {
+            Quarter = "Q2",
+            Revenue = 40000
+        },
+        new DataItem
+        {
+            Quarter = "Q3",
+            Revenue = 50000
+        },
+        new DataItem
+        {
+            Quarter = "Q4",
+            Revenue = 80000
+        },
+    };
+
+    private static List<Cita> citasPorDiaCardiología = new List<Cita>
+{
+    new Cita { Fecha = DateTime.Now.AddDays(-3).ToString("dd-MM-yyyy"), Cantidad = 8 },
+    new Cita { Fecha = DateTime.Now.AddDays(-2).ToString("dd-MM-yyyy"), Cantidad = 14 },
+    new Cita { Fecha = DateTime.Now.AddDays(-1).ToString("dd-MM-yyyy"), Cantidad = 25 },
+    new Cita { Fecha = DateTime.Now.AddDays(0).ToString("dd-MM-yyyy"), Cantidad = 19 }
+};
+
+    private static List<Cita> citasPorDiaPediatría = new List<Cita>
+{
+    new Cita { Fecha = DateTime.Now.AddDays(-3).ToString("dd-MM-yyyy"), Cantidad = 15 },
+    new Cita { Fecha = DateTime.Now.AddDays(-2).ToString("dd-MM-yyyy"), Cantidad = 7 },
+    new Cita { Fecha = DateTime.Now.AddDays(-1).ToString("dd-MM-yyyy"), Cantidad = 16 },
+    new Cita { Fecha = DateTime.Now.AddDays(0).ToString("dd-MM-yyyy"), Cantidad = 13 }
+};
+
+    private static List<Cita> citasPorDiaGinecología = new List<Cita>
+{
+    new Cita { Fecha = DateTime.Now.AddDays(-3).ToString("dd-MM-yyyy"), Cantidad = 9 },
+    new Cita { Fecha = DateTime.Now.AddDays(-2).ToString("dd-MM-yyyy"), Cantidad = 17 },
+    new Cita { Fecha = DateTime.Now.AddDays(-1).ToString("dd-MM-yyyy"), Cantidad = 12 },
+    new Cita { Fecha = DateTime.Now.AddDays(0).ToString("dd-MM-yyyy"), Cantidad = 13 }
+};
+
+    private static List<Cita> citasPorDiaMedicinaGeneral = new List<Cita>
+{
+    new Cita { Fecha = DateTime.Now.AddDays(-3).ToString("dd-MM-yyyy"), Cantidad = 15 },
+    new Cita { Fecha = DateTime.Now.AddDays(-2).ToString("dd-MM-yyyy"), Cantidad = 10 },
+    new Cita { Fecha = DateTime.Now.AddDays(-1).ToString("dd-MM-yyyy"), Cantidad = 8 },
+    new Cita { Fecha = DateTime.Now.AddDays(0).ToString("dd-MM-yyyy"), Cantidad = 14 }};
+
+
+    private List<Especialidad> pacientesPorEspecialidad = new List<Especialidad>
+    {
+        new Especialidad { Especialidadd = "Cardiología", Cantidad = citasPorDiaCardiología.Sum(x => x.Cantidad) },
+        new Especialidad { Especialidadd = "Pediatría", Cantidad = citasPorDiaPediatría.Sum(x => x.Cantidad) },
+        new Especialidad { Especialidadd = "Ginecología", Cantidad = citasPorDiaGinecología.Sum(x => x.Cantidad) },
+        new Especialidad { Especialidadd = "Medicina General", Cantidad = citasPorDiaMedicinaGeneral.Sum(x => x.Cantidad) }
+    };
+
+    private void IrAGestion()
+    {
+        // Lógica para redirigir al panel de gestión
+        NavigationManager.NavigateTo("/gestion");
+    }
+
+    // Clases para los datos de ejemplo
+    public class Cita
+    {
+        public string Fecha { get; set; }
+        public int Cantidad { get; set; }
+    }
+
+    public class Especialidad
+    {
+        public string Especialidadd { get; set; }
+        public int Cantidad { get; set; }
+    }
+}

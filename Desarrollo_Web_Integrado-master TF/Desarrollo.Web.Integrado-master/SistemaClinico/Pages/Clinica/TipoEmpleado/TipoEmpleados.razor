@@ -1,0 +1,163 @@
+@page "/tipo-empleados"
+@attribute [Authorize]
+
+<PageTitle>TipoEmpleados</PageTitle>
+<RadzenStack>
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText Text="Tipos de Empleado" TextStyle="TextStyle.H3" TagName="TagName.H1" style="margin: 0" />
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Icon="add_circle_outline" Text="Agregar" Click="@AddButtonClick" Variant="Variant.Flat" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn SizeMD=12>
+            <RadzenDataGrid @ref="grid0" ColumnWidth="200px" AllowFiltering="true" FilterMode="FilterMode.Advanced" AllowPaging="true" AllowSorting="true" ShowPagingSummary="true" PageSizeOptions=@(new int[] { 5, 10, 20, 30 })
+                            style="min-height: 150px" IsLoading=@isLoading
+                            PagerHorizontalAlign="HorizontalAlign.Right" PageSizeText=" por página"
+                            Data="@(tipoEmpleados)" LoadData="@Grid0LoadData" Count="@count" TItem="TipoEmpleado" RowSelect="@EditRow">
+                <Columns>
+                    <RadzenDataGridColumn TItem="TipoEmpleado" Property="IdTipoEmpleado" Title="Id Tipo Empleado">
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TipoEmpleado" Property="Descripcion" Title="Descripcion">
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TipoEmpleado" Property="Estado" Title="Estado">
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TipoEmpleado" Filterable="false" Sortable="false" Width="100px" TextAlign="TextAlign.Center">
+                        <Template Context="tipoEmpleado">
+                            <RadzenButton ButtonStyle="ButtonStyle.Warning" Icon="edit" Size="ButtonSize.Medium"
+                                          Shade="Shade.Lighter" Variant="Variant.Flat"
+                                          Click=@(args => GridEditButtonClick(args, tipoEmpleado)) @onclick:stopPropagation="true" />
+
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Size="ButtonSize.Medium"
+                                          Shade="Shade.Lighter" Variant="Variant.Flat"
+                                          Click=@(args => GridDeleteButtonClick(args, tipoEmpleado)) @onclick:stopPropagation="true" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+                <LoadingTemplate>
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Size="ProgressBarCircularSize.Small" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                </LoadingTemplate>
+                <PagingSummaryTemplate>
+                    Página @context.CurrentPage de @context.NumberOfPages <b>(@context.TotalCount registros)</b>
+                </PagingSummaryTemplate>
+            </RadzenDataGrid>
+
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenStack>
+
+
+@code {
+    [Inject]
+    protected IJSRuntime JSRuntime { get; set; }
+
+    [Inject]
+    protected NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    protected DialogService DialogService { get; set; }
+
+    [Inject]
+    protected TooltipService TooltipService { get; set; }
+
+    [Inject]
+    protected ContextMenuService ContextMenuService { get; set; }
+
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+
+    [Inject]
+    public dbService _dbService { get; set; }
+    [Inject]
+    public IService _service { get; set; }
+    protected IEnumerable<Shared.Models.Clinica.TipoEmpleado> tipoEmpleados;
+
+    protected RadzenDataGrid<Shared.Models.Clinica.TipoEmpleado> grid0;
+    protected int count;
+    bool isLoading = false;
+    protected async Task Grid0LoadData(LoadDataArgs args)
+    {
+        isLoading = true;
+        try
+        {
+            //var result = await _dbService.GetTipoEmpleados(filter: $"{args.Filter}", orderby: $"{args.OrderBy}", top: args.Top, skip: args.Skip, count:args.Top != null && args.Skip != null);
+            //tipoEmpleados = result.Value.AsODataEnumerable();
+            //count = result.Count;
+            var httpResponse = await _service.Get<List<Shared.Models.Clinica.TipoEmpleado>>($"api/tipo-empleados");
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                tipoEmpleados = httpResponse.Response;
+                count = httpResponse.Response.Count;
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = $"Unable to load TipoEmpleados" });
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    protected async Task AddButtonClick(MouseEventArgs args)
+    {
+        await DialogService.OpenAsync<AddTipoEmpleado>("Agregar TipoEmpleado", null);
+        await grid0.Reload();
+    }
+
+    protected async Task EditRow(Shared.Models.Clinica.TipoEmpleado args)
+    {
+        await DialogService.OpenAsync<EditTipoEmpleado>("Edit TipoEmpleado", new Dictionary<string, object> { { "IdTipoEmpleado", args.IdTipoEmpleado } });
+        await grid0.Reload();
+    }
+
+    protected async Task GridEditButtonClick(MouseEventArgs args, Shared.Models.Clinica.TipoEmpleado paciente)
+    {
+        await DialogService.OpenAsync<EditTipoEmpleado>("Edit TipoEmpleado", new Dictionary<string, object> { { "IdTipoEmpleado", paciente.IdTipoEmpleado } });
+        await grid0.Reload();
+    }
+
+    protected async Task GridDeleteButtonClick(MouseEventArgs args, Shared.Models.Clinica.TipoEmpleado tipoEmpleado)
+    {
+        try
+        {
+            if (await DialogService.Confirm("¿Está seguro de que desea eliminar este registro?", "Confirmar", new ConfirmOptions() { OkButtonText = "OK", CancelButtonText = "CANCELAR" }) == true)
+            {
+                //var deleteResult = await _dbService.DeleteTipoEmpleado(idTipoEmpleado:tipoEmpleado.IdTipoEmpleado);
+
+                //if (deleteResult != null)
+                //{
+                //    await grid0.Reload();
+                //}
+                var httpResponse = await _service.Delete($"api/tipo-empleados/{tipoEmpleado.IdTipoEmpleado}");
+                if (httpResponse.Error)
+                {
+                    NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+                }
+                else
+                {
+                    NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = $"Se eliminó correctamente" });
+                    await grid0.Reload();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = $"Error",
+                Detail = $"No se puede eliminar TipoEmpleado"
+            });
+        }
+    }
+}

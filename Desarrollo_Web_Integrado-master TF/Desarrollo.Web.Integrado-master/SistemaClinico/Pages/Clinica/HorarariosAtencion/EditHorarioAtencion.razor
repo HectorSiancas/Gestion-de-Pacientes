@@ -1,0 +1,293 @@
+@page "/edit-horario-atencion"
+@attribute [Authorize]
+
+<PageTitle>Edit HorarioAtencion</PageTitle>
+
+<RadzenColumn SizeMD=12>
+    <RadzenAlert Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Small" AlertStyle="AlertStyle.Danger" Visible="@errorVisible">Cannot save HorarioAtencion</RadzenAlert>
+    <RadzenTemplateForm TItem="HorarioAtencionCrearDTO" Data="@(horarioAtencion)" Visible="@(horarioAtencion != null)" Submit="@FormSubmit">
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Estado" Component="Estado" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenCheckBox @bind-Value="@(horarioAtencion.Estado)" Name="Estado" />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Fecha" Component="Fecha" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenDatePicker DateFormat="dd/MM/yyyy" style="display: block; width: 100%" @bind-Value="@(horarioAtencion.Fecha)" Name="Fecha" />
+            </RadzenColumn>
+        </RadzenRow>
+      @*   <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Fecha Fin" Component="FechaFin" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenDatePicker DateFormat="dd/MM/yyyy" style="display: block; width: 100%" @bind-Value="@(horarioAtencion.FechaFin)" Name="FechaFin" />
+            </RadzenColumn>
+        </RadzenRow> *@
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Dia Semana" Component="DiaSemana" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenDropDown Data="@(diaSemanasForIdDiaSemana)" TextProperty="NombreDiaSemana" ValueProperty="IdDiaSemana" AllowClear=true
+                                Placeholder="Elegir DiaSemana" style="display: block; width: 100%" @bind-Value="@(horarioAtencion.IdDiaSemana)" Name="IdDiaSemana"
+                                Count=@diaSemanasForIdDiaSemanaCount LoadData=@diaSemanasForIdDiaSemanaLoadData />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Hora" Component="Hora" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenDropDown Data="@(horasForIdHoraInicio)" TextProperty="Hora1" ValueProperty="IdHora" AllowClear=true
+                                Placeholder="Elegir Hora" style="display: block; width: 100%" @bind-Value="@(horarioAtencion.IdHoraInicio)" Name="IdHoraInicio"
+                                Count=@horasForIdHoraInicioCount LoadData=@horasForIdHoraInicioLoadData />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Medico" Component="Medico" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenDropDown Data="@(medicosForIdMedico)" TextProperty="@nameof(MedicoDTO.NombresApellidos)" ValueProperty="IdMedico" AllowClear=true
+                                Placeholder="Elegir Medico" style="display: block; width: 100%" @bind-Value="@(horarioAtencion.IdMedico)" Name="IdMedico"
+                                Count=@medicosForIdMedicoCount LoadData=@medicosForIdMedicoLoadData />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+            <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Icon="save" Text="Guardar" Variant="Variant.Flat" />
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Variant="Variant.Flat" Click="@CancelButtonClick" />
+        </RadzenStack>
+    </RadzenTemplateForm>
+</RadzenColumn>
+
+@code {
+    [Inject]
+    protected IJSRuntime JSRuntime { get; set; }
+
+    [Inject]
+    protected NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    protected DialogService DialogService { get; set; }
+
+    [Inject]
+    protected TooltipService TooltipService { get; set; }
+
+    [Inject]
+    protected ContextMenuService ContextMenuService { get; set; }
+
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+    // [Inject]
+    // public dbService _dbService { get; set; }
+
+    [Inject]
+    public IService _service { get; set; }
+
+    [Parameter]
+    public int IdHorarioAtencion { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // horarioAtencion = await _dbService.GetHorarioAtencionByIdHorarioAtencion(idHorarioAtencion: IdHorarioAtencion);
+        var httpResponse = await _service.Get<HorarioAtencionCrearDTO>($"api/horarios-atencion/{IdHorarioAtencion}");
+        if (httpResponse.Error)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+        }
+        else
+        {
+            horarioAtencion = httpResponse.Response;
+            horarioAtencion.IdDiaSemana = httpResponse.Response.DiaSemana.IdDiaSemana;
+            horarioAtencion.IdHoraInicio = httpResponse.Response.HoraInicio.IdHora;
+            horarioAtencion.IdMedico = httpResponse.Response.Medico.IdMedico;
+        }
+    }
+    protected bool errorVisible;
+    protected HorarioAtencionCrearDTO horarioAtencion;
+
+    protected IEnumerable<DiaSemana> diaSemanasForIdDiaSemana;
+
+    protected IEnumerable<Hora> horasForIdHoraInicio;
+
+    protected IEnumerable<MedicoDTO> medicosForIdMedico;
+
+
+    protected int diaSemanasForIdDiaSemanaCount;
+    protected DiaSemana diaSemanasForIdDiaSemanaValue;
+    protected async Task diaSemanasForIdDiaSemanaLoadData(LoadDataArgs args)
+    {
+        try
+        {
+            // var result = await _dbService.GetDiaSemanas(top: args.Top, skip: args.Skip, count: args.Top != null && args.Skip != null, filter: $"contains(NombreDiaSemana, '{(!string.IsNullOrEmpty(args.Filter) ? args.Filter : "")}')", orderby: $"{args.OrderBy}");
+            // diaSemanasForIdDiaSemana = result.Value.AsODataEnumerable();
+            // diaSemanasForIdDiaSemanaCount = result.Count;
+            var httpResponse = await _service.Get<List<DiaSemana>>($"api/dias-semana");
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                diaSemanasForIdDiaSemana = httpResponse.Response;
+                diaSemanasForIdDiaSemanaCount = httpResponse.Response.Count;
+            }
+
+        }
+        catch (System.Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = $"Unable to load DiaSemana" });
+        }
+    }
+
+    protected int horasForIdHoraInicioCount;
+    protected Hora horasForIdHoraInicioValue;
+    protected async Task horasForIdHoraInicioLoadData(LoadDataArgs args)
+    {
+        try
+        {
+            // var result = await _dbService.GetHoras(top: args.Top, skip: args.Skip, count: args.Top != null && args.Skip != null, filter: $"contains(Hora1, '{(!string.IsNullOrEmpty(args.Filter) ? args.Filter : "")}')", orderby: $"{args.OrderBy}");
+            // horasForIdHoraInicio = result.Value.AsODataEnumerable();
+            // horasForIdHoraInicioCount = result.Count;
+            var httpResponse = await _service.Get<List<Hora>>($"api/Horas");
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                horasForIdHoraInicio = httpResponse.Response;
+                horasForIdHoraInicioCount = httpResponse.Response.Count;
+            }
+        }
+        catch (System.Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = $"Unable to load Hora" });
+        }
+    }
+
+    protected int medicosForIdMedicoCount;
+    protected Medico medicosForIdMedicoValue;
+    protected async Task medicosForIdMedicoLoadData(LoadDataArgs args)
+    {
+        try
+        {
+            // var result = await _dbService.GetMedicos(top: args.Top, skip: args.Skip, count: args.Top != null && args.Skip != null, filter: $"contains(, '{(!string.IsNullOrEmpty(args.Filter) ? args.Filter : "")}')", orderby: $"{args.OrderBy}");
+            // medicosForIdMedico = result.Value.AsODataEnumerable();
+            // medicosForIdMedicoCount = result.Count;
+            var httpResponse = await _service.Get<List<MedicoDTO>>($"api/Medicos");
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                medicosForIdMedico = httpResponse.Response;
+                medicosForIdMedicoCount = httpResponse.Response.Count;
+            }
+        }
+        catch (System.Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = $"Unable to load Medico" });
+        }
+    }
+    protected async Task FormSubmit()
+    {
+        try
+        {
+            // await _dbService.UpdateHorarioAtencion(idHorarioAtencion: IdHorarioAtencion, horarioAtencion);
+            // DialogService.Close(horarioAtencion);
+
+            var diaSemana = await GetDiaSemana(horarioAtencion.IdDiaSemana ?? 0);
+            horarioAtencion.DiaSemana = diaSemana;
+
+            var hora = await GetHora(horarioAtencion.IdHoraInicio);
+            horarioAtencion.HoraInicio = hora;
+
+            var medico = await GetMedico(horarioAtencion.IdMedico);
+            horarioAtencion.Medico = medico;
+
+
+            var httpResponse = await _service.Put($"api/horarios-atencion/{IdHorarioAtencion}", horarioAtencion);
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Warning, Summary = $"Se modificó correctamente {IdHorarioAtencion}" });
+                DialogService.Close(medico);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorVisible = true;
+        }
+    }
+
+    protected async Task CancelButtonClick(MouseEventArgs args)
+    {
+        DialogService.Close(null);
+    }
+
+    async Task<DiaSemana> GetDiaSemana(int id)
+    {
+        try
+        {
+            var httpResponse = await _service.Get<DiaSemana>($"api/dias-semana/{id}");
+            if (!httpResponse.Error)
+            {
+                return httpResponse.Response;
+            }
+
+            return null;
+        }
+        catch (System.Exception ex)
+        {
+            return null;
+        }
+    }
+
+    async Task<Hora> GetHora(int id)
+    {
+        try
+        {
+            var httpResponse = await _service.Get<Hora>($"api/Horas/{id}");
+            if (!httpResponse.Error)
+            {
+                return httpResponse.Response;
+            }
+
+            return null;
+        }
+        catch (System.Exception ex)
+        {
+            return null;
+        }
+
+    }
+    async Task<Medico> GetMedico(int id)
+    {
+        try
+        {
+            var httpResponse = await _service.Get<Medico>($"api/Medicos/{id}");
+            if (!httpResponse.Error)
+            {
+                return httpResponse.Response;
+            }
+
+            return null;
+        }
+        catch (System.Exception ex)
+        {
+            return null;
+        }
+    }
+}

@@ -1,0 +1,16 @@
+﻿@page "/logout"
+@using SistemaClinico.Auth
+@inject ILoginService loginService
+@inject NavigationManager Navigation
+@* @layout AutorizandoLayout *@
+
+<text>Deslogueando....</text>
+
+
+@code {
+    protected async override Task OnInitializedAsync()
+    {
+        await loginService.Logout();
+        Navigation.NavigateTo("");
+    }
+}

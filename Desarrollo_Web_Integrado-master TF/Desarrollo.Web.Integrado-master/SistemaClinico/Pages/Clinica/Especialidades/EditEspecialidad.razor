@@ -1,0 +1,110 @@
+@page "/edit-especialidad"
+@attribute [Authorize]
+
+<PageTitle>Edit Especialidad</PageTitle>
+
+<RadzenColumn SizeMD=12>
+    <RadzenAlert Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Small" AlertStyle="AlertStyle.Danger" Visible="@errorVisible">Cannot save Especialidad</RadzenAlert>
+    <RadzenTemplateForm TItem="EspecialidadCrearDTO" Data="@(especialidad)" Visible="@(especialidad != null)" Submit="@FormSubmit">
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Descripcion" Component="Descripcion" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenTextBox style="display: block; width: 100%" @bind-Value="@(especialidad.Descripcion)" Name="Descripcion" />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Estado" Component="Estado" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenCheckBox @bind-Value="@(especialidad.Estado)" Name="Estado" />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+            <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Icon="save" Text="Guardar" Variant="Variant.Flat" />
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Variant="Variant.Flat" Click="@CancelButtonClick" />
+        </RadzenStack>
+    </RadzenTemplateForm>
+</RadzenColumn>
+
+@code {
+
+    [Inject]
+    protected IJSRuntime JSRuntime { get; set; }
+
+    [Inject]
+    protected NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    protected DialogService DialogService { get; set; }
+
+    [Inject]
+    protected TooltipService TooltipService { get; set; }
+
+    [Inject]
+    protected ContextMenuService ContextMenuService { get; set; }
+
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+    // [Inject]
+    // public dbService _dbService { get; set; }
+    [Inject]
+    public IService _service { get; set; }
+
+    [Parameter]
+    public int IdEspecialidad { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // especialidad = await _dbService.GetEspecialidadByIdEspecialidad(idEspecialidad: IdEspecialidad);
+        var httpResponse = await _service.Get<EspecialidadCrearDTO>($"api/especialidades/{IdEspecialidad}");
+        if (httpResponse.Error)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+        }
+        else
+        {
+            especialidad = httpResponse.Response;
+            // especialidad.IdTipoEmpleado = httpResponse.Response.TipoEmpleado.IdTipoEmpleado;
+        }
+    }
+    protected bool errorVisible;
+    protected EspecialidadCrearDTO especialidad;
+
+    protected async Task FormSubmit()
+    {
+        // try
+        // {
+        //     await _dbService.UpdateEspecialidad(idEspecialidad: IdEspecialidad, especialidad);
+        //     DialogService.Close(especialidad);
+        // }
+        // catch (Exception ex)
+        // {
+        //     errorVisible = true;
+        // }
+        try
+        {
+            var httpResponse = await _service.Put($"api/especialidades/{IdEspecialidad}", especialidad);
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Warning, Summary = $"Se modificó correctamente {IdEspecialidad}" });
+                DialogService.Close(especialidad);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorVisible = true;
+        }
+    }
+
+    protected async Task CancelButtonClick(MouseEventArgs args)
+    {
+        DialogService.Close(null);
+    }
+}

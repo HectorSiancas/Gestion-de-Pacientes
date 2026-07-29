@@ -1,0 +1,191 @@
+@page "/edit-medico"
+@attribute [Authorize]
+
+<PageTitle>Edit Medico</PageTitle>
+
+<RadzenColumn SizeMD=12>
+    <RadzenAlert Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Small" AlertStyle="AlertStyle.Danger" Visible="@errorVisible">Cannot save Medico</RadzenAlert>
+    <RadzenTemplateForm TItem="MedicoCrearDTO" Data="@(medico)" Visible="@(medico != null)" Submit="@FormSubmit">
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Estado" Component="Estado" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenCheckBox @bind-Value="@(medico.Estado)" Name="Estado" />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Empleado" Component="Empleado" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenDropDown Data="@(empleadosForIdEmpleado)" TextProperty="ApMaterno" ValueProperty="IdEmpleado" AllowClear=true
+                                Placeholder="Elegir Empleado" style="display: block; width: 100%" @bind-Value="@(medico.IdEmpleado)" Name="IdEmpleado"
+                                Count=@empleadosForIdEmpleadoCount LoadData=@empleadosForIdEmpleadoLoadData />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow style="margin-bottom: 1rem">
+            <RadzenColumn SizeMD="3">
+                <RadzenLabel Text="Especialidad" Component="Especialidad" style="width: 100%" />
+            </RadzenColumn>
+            <RadzenColumn SizeMD="9">
+                <RadzenDropDown Data="@(especialidadsForIdEspecialidad)" TextProperty="Descripcion" ValueProperty="IdEspecialidad" AllowClear=true
+                                Placeholder="Elegir Especialidad" style="display: block; width: 100%" @bind-Value="@(medico.IdEspecialidad)" Name="IdEspecialidad"
+                                Count=@especialidadsForIdEspecialidadCount LoadData=@especialidadsForIdEspecialidadLoadData />
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+            <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Icon="save" Text="Guardar" Variant="Variant.Flat" />
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Text="Cancelar" Variant="Variant.Flat" Click="@CancelButtonClick" />
+        </RadzenStack>
+    </RadzenTemplateForm>
+</RadzenColumn>
+
+
+
+
+@code {
+
+    [Inject]
+    protected IJSRuntime JSRuntime { get; set; }
+
+    [Inject]
+    protected NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    protected DialogService DialogService { get; set; }
+
+    [Inject]
+    protected TooltipService TooltipService { get; set; }
+
+    [Inject]
+    protected ContextMenuService ContextMenuService { get; set; }
+
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+    // [Inject]
+    // public dbService _dbService { get; set; }
+
+    [Inject]
+    public IService _service { get; set; }
+
+    [Parameter]
+    public int IdMedico { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // medico = await _dbService.GetMedicoByIdMedico(idMedico: IdMedico);
+        var httpResponse = await _service.Get<MedicoCrearDTO>($"api/medicos/{IdMedico}");
+        if (httpResponse.Error)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+        }
+        else
+        {
+            medico = httpResponse.Response;
+            medico.IdEmpleado = httpResponse.Response.Empleado.IdEmpleado;
+            medico.IdEspecialidad = httpResponse.Response.Especialidad.IdEspecialidad;
+        }
+    }
+    protected bool errorVisible;
+    protected MedicoCrearDTO medico;
+
+    protected IEnumerable<Shared.Models.Clinica.Empleado> empleadosForIdEmpleado;
+
+    protected IEnumerable<Especialidad> especialidadsForIdEspecialidad;
+
+
+    protected int empleadosForIdEmpleadoCount;
+    protected Shared.Models.Clinica.Empleado empleadosForIdEmpleadoValue;
+    protected async Task empleadosForIdEmpleadoLoadData(LoadDataArgs args)
+    {
+        try
+        {
+            // var result = await _dbService.GetEmpleados(top: args.Top, skip: args.Skip, count: args.Top != null && args.Skip != null, filter: $"contains(ApMaterno, '{(!string.IsNullOrEmpty(args.Filter) ? args.Filter : "")}')", orderby: $"{args.OrderBy}");
+            // empleadosForIdEmpleado = result.Value.AsODataEnumerable();
+            // empleadosForIdEmpleadoCount = result.Count;
+
+            var httpResponse = await _service.Get<List<Shared.Models.Clinica.Empleado>>($"api/empleados");
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                // empleadosForIdEmpleado = httpResponse.Response;
+                // empleadosForIdEmpleadoCount = httpResponse.Response.Count;
+                var data = httpResponse.Response.Where(x => x.TipoEmpleado.IdTipoEmpleado == 3).ToList();
+                empleadosForIdEmpleado = data;
+                empleadosForIdEmpleadoCount = data.Count;
+            }
+
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = $"Unable to load Empleado" });
+        }
+    }
+
+    protected int especialidadsForIdEspecialidadCount;
+    protected Especialidad especialidadsForIdEspecialidadValue;
+    protected async Task especialidadsForIdEspecialidadLoadData(LoadDataArgs args)
+    {
+        try
+        {
+            // var result = await _dbService.GetEspecialidads(top: args.Top, skip: args.Skip, count: args.Top != null && args.Skip != null, filter: $"contains(Descripcion, '{(!string.IsNullOrEmpty(args.Filter) ? args.Filter : "")}')", orderby: $"{args.OrderBy}");
+            // especialidadsForIdEspecialidad = result.Value.AsODataEnumerable();
+            // especialidadsForIdEspecialidadCount = result.Count;
+
+            var httpResponse = await _service.Get<List<Especialidad>>($"api/especialidades");
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                especialidadsForIdEspecialidad = httpResponse.Response;
+                especialidadsForIdEspecialidadCount = httpResponse.Response.Count;
+            }
+
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = $"Unable to load Especialidad" });
+        }
+    }
+    protected async Task FormSubmit()
+    {
+        try
+        {
+            // await _dbService.UpdateMedico(idMedico: IdMedico, medico);
+            // DialogService.Close(medico);
+
+            var empleado =  empleadosForIdEmpleado.Where(x => x.IdEmpleado == medico.IdEmpleado).FirstOrDefault();
+            medico.Empleado = empleado;
+
+            var especialidad = especialidadsForIdEspecialidad.Where(x => x.IdEspecialidad == medico.IdEspecialidad).FirstOrDefault();
+            medico.Especialidad = especialidad;
+
+
+            var httpResponse = await _service.Put($"api/medicos/{IdMedico}", medico);
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Warning, Summary = $"Se modificó correctamente {IdMedico}" });
+                DialogService.Close(medico);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorVisible = true;
+        }
+    }
+
+    protected async Task CancelButtonClick(MouseEventArgs args)
+    {
+        DialogService.Close(null);
+    }
+}

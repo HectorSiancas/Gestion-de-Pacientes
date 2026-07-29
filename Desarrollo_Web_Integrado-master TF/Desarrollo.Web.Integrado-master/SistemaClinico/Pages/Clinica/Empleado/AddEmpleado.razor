@@ -1,0 +1,71 @@
+@page "/add-empleado"
+@using Shared.DTOs
+@attribute [Authorize]
+
+<PageTitle>Agregar Empleado</PageTitle>
+<RadzenColumn SizeMD=12>
+    <RadzenAlert Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Small" AlertStyle="AlertStyle.Danger" Visible="@errorVisible">Cannot save Empleado</RadzenAlert>
+    <FormularioEmpleado model="empleado" FormSubmit="FormSubmit" CancelButtonClick="Cancel" />
+</RadzenColumn>
+
+@code {
+    [Inject]
+    public IService _service { get; set; }
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+    [Inject]
+    protected DialogService DialogService { get; set; }
+
+    private EmpleadoCreateDTO empleado = new EmpleadoCreateDTO();
+    protected bool errorVisible;
+
+
+    protected async Task FormSubmit()
+    {
+        try
+        {
+            var tipo = await tipoEmpleado(empleado.IdTipoEmpleado);
+            empleado.TipoEmpleado = tipo;
+
+            var httpResponse = await _service.Post($"api/empleados", empleado);
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = $"Se agregó correctamente" });
+                DialogService.Close(empleado);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorVisible = true;
+        }
+    }
+
+    protected async Task Cancel()
+    {
+        DialogService.Close(null);
+    }
+
+
+    async Task<TipoEmpleado> tipoEmpleado(int id)
+    {
+        try
+        {
+            var httpResponse = await _service.Get<TipoEmpleado>($"api/tipo-empleados/{id}");
+            if (!httpResponse.Error)
+            {
+                return httpResponse.Response;
+            }
+
+            return null;
+        }
+        catch (System.Exception ex)
+        {
+            return null;
+        }
+    }
+
+}

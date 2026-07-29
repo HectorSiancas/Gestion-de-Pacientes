@@ -1,0 +1,68 @@
+@page "/edit-paciente"
+@attribute [Authorize]
+
+<PageTitle>Edit Paciente</PageTitle>
+
+<RadzenColumn SizeMD=12>
+    <RadzenAlert Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Small" AlertStyle="AlertStyle.Danger" Visible="@errorVisible">Cannot save Paciente</RadzenAlert>
+    <FormularioPaciente FormSubmit="FormSubmit" model="paciente" CancelButtonClick="Cancel" Modificar="true" />
+</RadzenColumn>
+
+@code {
+    [Parameter]
+    public int IdPaciente { get; set; }
+
+    [Inject]
+    public IService _service { get; set; }
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+    [Inject]
+    protected DialogService DialogService { get; set; }
+
+    private PacienteCreateDTO paciente = new PacienteCreateDTO();
+    protected bool errorVisible;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var httpResponse = await _service.Get<PacienteCreateDTO>($"api/pacientes/{IdPaciente}");
+        if (httpResponse.Error)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+        }
+        else
+        {
+            paciente = httpResponse.Response;
+        }
+    }
+
+
+    protected async Task FormSubmit()
+    {
+        try
+        {
+            var httpResponse = await _service.Put($"api/pacientes/{IdPaciente}", paciente);
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                //Snackbar.Add($"Se modificó correctamente {Grupo.Descripcion}", Severity.Success);
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Warning, Summary = $"Se modificó correctamente {IdPaciente}" });
+                DialogService.Close(paciente);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorVisible = true;
+        }
+    }
+
+    protected async Task Cancel()
+    {
+        DialogService.Close(null);
+    }
+}
+
+

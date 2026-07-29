@@ -1,0 +1,160 @@
+@page "/diagnosticos"
+@attribute [Authorize]
+
+<PageTitle>Diagnosticos</PageTitle>
+<RadzenStack>
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText Text="Diagnosticos" TextStyle="TextStyle.H3" TagName="TagName.H1" style="margin: 0" />
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Icon="add_circle_outline" Text="Agregar" Click="@AddButtonClick" Variant="Variant.Flat" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn SizeMD=12>
+            <RadzenDataGrid @ref="grid0" ColumnWidth="200px" AllowFiltering="true" FilterMode="FilterMode.Advanced" AllowPaging="true" AllowSorting="true" ShowPagingSummary="true" PageSizeOptions=@(new int[] { 5, 10, 20, 30 })
+                            style="min-height: 150px" IsLoading=@isLoading
+                            PagerHorizontalAlign="HorizontalAlign.Right" PageSizeText=" por página"
+                            Data="@(diagnosticos)" LoadData="@Grid0LoadData" Count="@count" TItem="Diagnostico" RowSelect="@EditRow">
+                <Columns>
+                    <RadzenDataGridColumn TItem="Diagnostico" Property="IdDiagnostico" Title="Id Diagnostico">
+                    </RadzenDataGridColumn>
+                    @* <RadzenDataGridColumn TItem="Diagnostico" Property="Estado" Title="Estado">
+                    </RadzenDataGridColumn> *@
+                    <RadzenDataGridColumn TItem="Diagnostico" Property="FechaEmision" Title="Fecha Emision">
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Diagnostico" Title="Paciente">
+                        <Template>
+                            @context.HistoriaClinica.Paciente.ApPaterno @context.HistoriaClinica.Paciente.ApMaterno @context.HistoriaClinica.Paciente.Nombres
+                        </Template>
+                    </RadzenDataGridColumn>
+                    
+                    <RadzenDataGridColumn TItem="Diagnostico" Property="Observacion" Title="Observacion">
+                    </RadzenDataGridColumn>
+                    @* <RadzenDataGridColumn TItem="Diagnostico" Property="HistoriaClinica.IdPaciente" Title="Historia Clinica">
+                    </RadzenDataGridColumn> *@
+                    
+                    <RadzenDataGridColumn TItem="Diagnostico" Filterable="false" Sortable="false" Width="70px" TextAlign="TextAlign.Center">
+                        <Template Context="diagnostico">
+
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Size="ButtonSize.Medium"
+                                          Shade="Shade.Lighter" Variant="Variant.Flat"
+                                          Click=@(args => GridDeleteButtonClick(args, diagnostico)) @onclick:stopPropagation="true" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+                <LoadingTemplate>
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Size="ProgressBarCircularSize.Small" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                </LoadingTemplate>
+                <PagingSummaryTemplate>
+                    Página @context.CurrentPage de @context.NumberOfPages <b>(@context.TotalCount registros)</b>
+                </PagingSummaryTemplate>
+            </RadzenDataGrid>
+
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenStack>
+
+@code {
+    [Inject]
+    protected IJSRuntime JSRuntime { get; set; }
+
+    [Inject]
+    protected NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    protected DialogService DialogService { get; set; }
+
+    [Inject]
+    protected TooltipService TooltipService { get; set; }
+
+    [Inject]
+    protected ContextMenuService ContextMenuService { get; set; }
+
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+
+    [Inject]
+    public dbService _dbService { get; set; }
+    [Inject]
+    public IService _service { get; set; }
+    protected IEnumerable<Diagnostico> diagnosticos;
+
+    protected RadzenDataGrid<Diagnostico> grid0;
+    protected int count;
+    bool isLoading = false;
+    protected async Task Grid0LoadData(LoadDataArgs args)
+    {
+        isLoading = true;
+        try
+        {
+            //var result = await _dbService.GetDiagnosticos(filter: $"{args.Filter}", expand: "HistoriaClinica", orderby: $"{args.OrderBy}", top: args.Top, skip: args.Skip, count:args.Top != null && args.Skip != null);
+            //diagnosticos = result.Value.AsODataEnumerable();
+            //count = result.Count;
+
+            var httpResponse = await _service.Get<List<Diagnostico>>($"api/Diagnosticos");
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                diagnosticos = httpResponse.Response;
+                count = httpResponse.Response.Count;
+            }
+        }
+        catch (System.Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = $"Unable to load Diagnosticos" });
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    protected async Task AddButtonClick(MouseEventArgs args)
+    {
+        await DialogService.OpenAsync<AddDiagnostico>("Agregar Diagnostico", null);
+        await grid0.Reload();
+    }
+
+    protected async Task EditRow(Diagnostico args)
+    {
+        await DialogService.OpenAsync<EditDiagnostico>("Edit Diagnostico", new Dictionary<string, object> { { "IdDiagnostico", args.IdDiagnostico } });
+        await grid0.Reload();
+    }
+
+    protected async Task GridDeleteButtonClick(MouseEventArgs args, Diagnostico diagnostico)
+    {
+        try
+        {
+
+            if (await DialogService.Confirm("¿Está seguro de que desea eliminar este registro?", "Confirmar", new ConfirmOptions() { OkButtonText = "OK", CancelButtonText = "CANCELAR" }) == true)
+            {
+                var httpResponse = await _service.Delete($"api/Diagnosticos/{diagnostico.IdDiagnostico}");
+                if (httpResponse.Error)
+                {
+                    NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+                }
+                else
+                {
+                    NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = $"Se eliminó correctamente" });
+                    await grid0.Reload();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = $"Error",
+                Detail = $"No se puede eliminar Diagnostico"
+            });
+        }
+    }
+}

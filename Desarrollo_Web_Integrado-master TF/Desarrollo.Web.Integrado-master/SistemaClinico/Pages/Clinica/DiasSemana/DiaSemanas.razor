@@ -1,0 +1,152 @@
+@page "/dia-semanas"
+@attribute [Authorize]
+
+<PageTitle>DiaSemanas</PageTitle>
+<RadzenStack>
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText Text="Dias de la Semana" TextStyle="TextStyle.H3" TagName="TagName.H1" style="margin: 0" />
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Icon="add_circle_outline" Text="Agregar" Click="@AddButtonClick" Variant="Variant.Flat" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn SizeMD=12>
+            <RadzenDataGrid @ref="grid0" ColumnWidth="200px" AllowFiltering="true" FilterMode="FilterMode.Advanced" AllowPaging="true" AllowSorting="true" ShowPagingSummary="true" PageSizeOptions=@(new int[] { 5, 10, 20, 30 })
+                            style="min-height: 150px" IsLoading=@isLoading
+                            PagerHorizontalAlign="HorizontalAlign.Right" PageSizeText=" por página"
+            Data="@(diaSemanas)" LoadData="@Grid0LoadData" Count="@count" TItem="DiaSemana" RowSelect="@EditRow">
+                <Columns>
+                    <RadzenDataGridColumn TItem="DiaSemana" Property="IdDiaSemana" Title="Id Dia Semana">
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="DiaSemana" Property="NombreDiaSemana" Title="Nombre Dia Semana">
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="DiaSemana" Filterable="false" Sortable="false" Width="70px" TextAlign="TextAlign.Center">
+                        <Template Context="diaSemana">
+
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Size="ButtonSize.Medium"
+                                          Shade="Shade.Lighter" Variant="Variant.Flat"
+                                          Click=@(args => GridDeleteButtonClick(args, diaSemana)) @onclick:stopPropagation="true" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+                <LoadingTemplate>
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Size="ProgressBarCircularSize.Small" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                </LoadingTemplate>
+                <PagingSummaryTemplate>
+                    Página @context.CurrentPage de @context.NumberOfPages <b>(@context.TotalCount registros)</b>
+                </PagingSummaryTemplate>
+            </RadzenDataGrid>
+
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenStack>
+
+@code {
+    [Inject]
+    protected IJSRuntime JSRuntime { get; set; }
+
+    [Inject]
+    protected NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    protected DialogService DialogService { get; set; }
+
+    [Inject]
+    protected TooltipService TooltipService { get; set; }
+
+    [Inject]
+    protected ContextMenuService ContextMenuService { get; set; }
+
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+
+    // [Inject]
+    // public dbService _dbService { get; set; }
+    [Inject]
+    public IService _service { get; set; }
+    protected IEnumerable<DiaSemana> diaSemanas;
+
+    protected RadzenDataGrid<DiaSemana> grid0;
+    protected int count;
+    bool isLoading = false;
+    protected async Task Grid0LoadData(LoadDataArgs args)
+    {
+        isLoading = true;
+        try
+        {
+            //var result = await _dbService.GetDiaSemanas(filter: $"{args.Filter}", orderby: $"{args.OrderBy}", top: args.Top, skip: args.Skip, count:args.Top != null && args.Skip != null);
+            //diaSemanas = result.Value.AsODataEnumerable();
+            //count = result.Count;
+
+            var httpResponse = await _service.Get<List<DiaSemana>>($"api/dias-semana");
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                diaSemanas = httpResponse.Response;
+                count = httpResponse.Response.Count;
+            }
+        }
+        catch (System.Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = $"Unable to load DiaSemanas" });
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    protected async Task AddButtonClick(MouseEventArgs args)
+    {
+        await DialogService.OpenAsync<AddDiaSemana>("Agregar DiaSemana", null);
+        await grid0.Reload();
+    }
+
+    protected async Task EditRow(DiaSemana args)
+    {
+        await DialogService.OpenAsync<EditDiaSemana>("Edit DiaSemana", new Dictionary<string, object> { { "IdDiaSemana", args.IdDiaSemana } });
+        await grid0.Reload();
+    }
+
+    protected async Task GridDeleteButtonClick(MouseEventArgs args, DiaSemana diaSemana)
+    {
+        try
+        {
+            if (await DialogService.Confirm("¿Está seguro de que desea eliminar este registro?", "Confirmar", new ConfirmOptions() { OkButtonText = "OK", CancelButtonText = "CANCELAR" }) == true)
+            {
+                // var deleteResult = await _dbService.DeleteDiaSemana(idDiaSemana: diaSemana.IdDiaSemana);
+
+                // if (deleteResult != null)
+                // {
+                //     await grid0.Reload();
+                // }
+                var httpResponse = await _service.Delete($"api/dias-semana/{diaSemana.IdDiaSemana}");
+                if (httpResponse.Error)
+                {
+                    NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+                }
+                else
+                {
+                    NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = $"Se eliminó correctamente" });
+                    await grid0.Reload();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = $"Error",
+                Detail = $"No se puede eliminar DiaSemana"
+            });
+        }
+    }
+}

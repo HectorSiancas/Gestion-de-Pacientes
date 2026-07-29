@@ -1,0 +1,174 @@
+@page "/especialidads"
+@attribute [Authorize]
+
+<PageTitle>Especialidades</PageTitle>
+<RadzenStack>
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText Text="Especialidades" TextStyle="TextStyle.H3" TagName="TagName.H1" style="margin: 0" />
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Icon="add_circle_outline" Text="Agregar" Click="@AddButtonClick" Variant="Variant.Flat" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn SizeMD=12>
+            <RadzenDataGrid @ref="grid0" ColumnWidth="200px" AllowFiltering="true" FilterMode="FilterMode.Advanced" AllowPaging="true" AllowSorting="true" ShowPagingSummary="true" PageSizeOptions=@(new int[] { 5, 10, 20, 30 })
+                            style="min-height: 150px" IsLoading=@isLoading
+                            PagerHorizontalAlign="HorizontalAlign.Right" PageSizeText=" por página"
+            Data="@(especialidads)" LoadData="@Grid0LoadData" Count="@count" TItem="Especialidad" RowSelect="@EditRow">
+                <Columns>
+                    <RadzenDataGridColumn TItem="Especialidad" Property="IdEspecialidad" Title="Id Especialidad">
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Especialidad" Property="Descripcion" Title="Descripcion">
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Especialidad" Property="Estado" Title="Estado">
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="Especialidad" Filterable="false" Sortable="false" Width="70px" TextAlign="TextAlign.Center">
+                        <Template Context="especialidad">
+
+                            <RadzenButton ButtonStyle="ButtonStyle.Warning" Icon="edit" Size="ButtonSize.Medium"
+                                          Shade="Shade.Lighter" Variant="Variant.Flat"
+                                          Click=@(args => GridEditButtonClick(args, especialidad)) @onclick:stopPropagation="true" />
+
+
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="Especialidad" Filterable="false" Sortable="false" Width="70px" TextAlign="TextAlign.Center">
+                        <Template Context="especialidad">
+
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Size="ButtonSize.Medium"
+                                          Shade="Shade.Lighter" Variant="Variant.Flat"
+                                          Click=@(args => GridDeleteButtonClick(args, especialidad)) @onclick:stopPropagation="true" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+                <LoadingTemplate>
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Size="ProgressBarCircularSize.Small" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                </LoadingTemplate>
+                <PagingSummaryTemplate>
+                    Página @context.CurrentPage de @context.NumberOfPages <b>(@context.TotalCount registros)</b>
+                </PagingSummaryTemplate>
+            </RadzenDataGrid>
+
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenStack>
+
+
+@code {
+    [Inject]
+    protected IJSRuntime JSRuntime { get; set; }
+
+    [Inject]
+    protected NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    protected DialogService DialogService { get; set; }
+
+    [Inject]
+    protected TooltipService TooltipService { get; set; }
+
+    [Inject]
+    protected ContextMenuService ContextMenuService { get; set; }
+
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+
+    // [Inject]
+    // public dbService _dbService { get; set; }
+    [Inject]
+    public IService _service { get; set; }
+    protected IEnumerable<Especialidad> especialidads;
+
+    protected RadzenDataGrid<Especialidad> grid0;
+    protected int count;
+    bool isLoading = false;
+    protected async Task Grid0LoadData(LoadDataArgs args)
+    {
+        isLoading = true;
+        try
+        {
+            //var result = await _dbService.GetEspecialidads(filter: $"{args.Filter}", orderby: $"{args.OrderBy}", top: args.Top, skip: args.Skip, count:args.Top != null && args.Skip != null);
+            //especialidads = result.Value.AsODataEnumerable();
+            //count = result.Count;
+
+            var httpResponse = await _service.Get<List<Especialidad>>($"api/especialidades");
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                especialidads = httpResponse.Response;
+                count = httpResponse.Response.Count;
+            }
+        }
+        catch (System.Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = $"Unable to load Especialidads" });
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    protected async Task AddButtonClick(MouseEventArgs args)
+    {
+        await DialogService.OpenAsync<AddEspecialidad>("Agregar Especialidad", null);
+        await grid0.Reload();
+    }
+
+    protected async Task EditRow(Especialidad args)
+    {
+        await DialogService.OpenAsync<EditEspecialidad>("Edit Especialidad", new Dictionary<string, object> { { "IdEspecialidad", args.IdEspecialidad } });
+        await grid0.Reload();
+    }
+
+    protected async Task GridEditButtonClick(MouseEventArgs args, Especialidad especialidad)
+    {
+        await DialogService.OpenAsync<EditEspecialidad>("Edit Especialidad", new Dictionary<string, object> { { "IdEspecialidad", especialidad.IdEspecialidad } });
+        await grid0.Reload();
+    }
+
+    protected async Task GridDeleteButtonClick(MouseEventArgs args, Especialidad especialidad)
+    {
+        try
+        {
+            if (await DialogService.Confirm("¿Está seguro de que desea eliminar este registro?", "Confirmar", new ConfirmOptions() { OkButtonText = "OK", CancelButtonText = "CANCELAR" }) == true)
+            {
+                // var deleteResult = await _dbService.DeleteEspecialidad(idEspecialidad: especialidad.IdEspecialidad);
+
+                // if (deleteResult != null)
+                // {
+                //     await grid0.Reload();
+                // }
+
+                var httpResponse = await _service.Delete($"api/especialidades/{especialidad.IdEspecialidad}");
+                if (httpResponse.Error)
+                {
+                    NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+                }
+                else
+                {
+                    NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = $"Se eliminó correctamente" });
+                    await grid0.Reload();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = $"Error",
+                Detail = $"No se puede eliminar Especialidad"
+            });
+        }
+    }
+}

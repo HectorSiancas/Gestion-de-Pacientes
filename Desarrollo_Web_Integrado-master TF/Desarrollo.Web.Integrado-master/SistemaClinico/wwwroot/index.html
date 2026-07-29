@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es-pe">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistema Clinico</title>
+    <base href="/" />
+    <!--<link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />-->
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="icon" type="image/png" href="favicon.ico" />
+    <link href="SistemaClinico.styles.css" rel="stylesheet" />
+    <link href="manifest.webmanifest" rel="manifest" />
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
+    <style>
+        .container {
+            width: 100%;
+            height: 100vh; /* Altura del contenedor para ocupar toda la ventana del navegador */
+            display: flex;
+            justify-content: center; /* Centrar horizontalmente */
+            align-items: center; /* Centrar verticalmente */
+        }
+
+        /* HTML: <div class="loader"></div> */
+        .loader {
+            height: 4px;
+            width: 100%;
+            --c: no-repeat linear-gradient(#0a574f 0 0);
+            background: var(--c),var(--c),#16ADE1;
+            background-size: 60% 100%;
+            animation: l16 3s infinite;
+        }
+
+        @keyframes l16 {
+            0% {
+                background-position: -150% 0,-150% 0
+            }
+
+            66% {
+                background-position: 250% 0,-150% 0
+            }
+
+            100% {
+                background-position: 250% 0, 250% 0
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div class="container">
+            <div style="width: 300px; text-align: center;">
+                <img src="images/health.png" alt="Logo" style="width: 80px; height: auto; margin-bottom: 20px;">
+                <!--<img src="img/logopnp.png" alt="Logo" style="width: 80px; height: auto; margin-bottom: 20px;">-->
+                <br />
+                <p style="margin-bottom:10px"><b>Sistema clinico</b></p>
+                <div class="loader"></div>
+                <br />
+                <div class="loading-text"></div>
+            </div>
+        </div>
+    </div>
+
+    <!--<div id="app">
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+            <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+        <div class="loading-progress-text"></div>
+    </div>-->
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+    <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script>navigator.serviceWorker.register('service-worker.js');</script>
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.min.js"></script>
+</body>
+
+</html>

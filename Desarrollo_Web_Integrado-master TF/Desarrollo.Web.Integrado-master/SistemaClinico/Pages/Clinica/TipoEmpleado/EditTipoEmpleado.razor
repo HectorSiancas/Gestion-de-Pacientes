@@ -1,0 +1,66 @@
+@page "/edit-tipo-empleado"
+@using Shared.DTOs
+@attribute [Authorize]
+
+<PageTitle>Edit TipoEmpleado</PageTitle>
+
+<RadzenColumn SizeMD=12>
+    <RadzenAlert Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Small" AlertStyle="AlertStyle.Danger" Visible="@errorVisible">Cannot save TipoEmpleado</RadzenAlert>
+    <FormularioTipoEmpleado model="tipoEmpleado" FormSubmit="FormSubmit" CancelButtonClick="Cancel" Modificar="true" />
+</RadzenColumn>
+
+
+@code {
+    [Parameter]
+    public int IdTipoEmpleado { get; set; }
+
+    [Inject]
+    public IService _service { get; set; }
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+    [Inject]
+    protected DialogService DialogService { get; set; }
+
+    private TipoEmpleadoDTO tipoEmpleado = new TipoEmpleadoDTO();
+    protected bool errorVisible;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var httpResponse = await _service.Get<TipoEmpleadoDTO>($"api/tipo-empleados/{IdTipoEmpleado}");
+        if (httpResponse.Error)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+        }
+        else
+        {
+            tipoEmpleado = httpResponse.Response;
+        }
+    }
+
+    protected async Task FormSubmit()
+    {
+        try
+        {
+            var httpResponse = await _service.Put($"api/tipo-empleados/{IdTipoEmpleado}", tipoEmpleado);
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Warning, Summary = $"Se modificó correctamente {IdTipoEmpleado}" });
+                DialogService.Close(tipoEmpleado);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorVisible = true;
+        }
+    }
+
+    protected async Task Cancel()
+    {
+        DialogService.Close(null);
+    }
+}

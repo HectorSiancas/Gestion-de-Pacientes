@@ -1,0 +1,194 @@
+@page "/pacientes"
+@attribute [Authorize]
+
+<PageTitle>Pacientes</PageTitle>
+<RadzenStack>
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText Text="Pacientes" TextStyle="TextStyle.H3" TagName="TagName.H1" style="margin: 0" />
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Icon="add_circle_outline" Text="Agregar" Click="@AddButtonClick" Variant="Variant.Flat" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn SizeMD=12>
+            <RadzenDataGrid @ref="grid0" ColumnWidth="200px" AllowFiltering="false" FilterMode="FilterMode.Advanced"
+                            PagerHorizontalAlign="HorizontalAlign.Right" AllowPaging="true" AllowSorting="true" ShowPagingSummary="true" PageSizeOptions=@(new int[]{5, 10, 20, 30}) PageSizeText=" por página"
+                            style="min-height: 150px" IsLoading=@isLoading
+                            Data="@(pacientes)" LoadData="@Grid0LoadData" Count="@count" TItem="Paciente" RowSelect="@EditRow">
+
+                <PagingSummaryTemplate>
+                    @* <RadzenIcon Icon="database" Style="color: var(--rz-primary); font-size: var(--rz-pager-summary-font-size);" /> *@
+                    Página @context.CurrentPage de @context.NumberOfPages <b>(@context.TotalCount registros)</b>
+                </PagingSummaryTemplate>
+
+                <Columns>
+                    <RadzenDataGridColumn TItem="Paciente" Property="IdPaciente" Title="Id Paciente">
+                    </RadzenDataGridColumn>
+                    @*     <RadzenDataGridColumn TItem="Paciente" Property="ApMaterno" Title="Ap Materno">
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Paciente" Property="ApPaterno" Title="Ap Paterno">
+                </RadzenDataGridColumn> *@
+
+                    <RadzenDataGridColumn TItem="Paciente" Title="Nombre completo">
+                        <Template>
+                            @($"{context.ApPaterno} {context.ApMaterno}, {context.Nombres}".ToUpper())
+                        </Template>
+                    </RadzenDataGridColumn>
+
+
+                    <RadzenDataGridColumn TItem="Paciente" Property="Direccion" Title="Correo">
+                    </RadzenDataGridColumn>
+
+                    @*                 <RadzenDataGridColumn TItem="Paciente" Property="Estado" Title="Estado">
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Paciente" Property="Imagen" Title="Imagen">
+                </RadzenDataGridColumn> *@
+                    @*                 <RadzenDataGridColumn TItem="Paciente" Property="Nombres" Title="Nombres">
+                </RadzenDataGridColumn> *@
+                    <RadzenDataGridColumn TItem="Paciente" Property="NroDocumento" Title="Nro Documento">
+                    </RadzenDataGridColumn>
+                    @* <RadzenDataGridColumn TItem="Paciente" Property="Edad" Title="Edad">
+                    </RadzenDataGridColumn> *@
+                    <RadzenDataGridColumn TItem="Paciente" Property="Sexo" Title="Sexo">
+                    </RadzenDataGridColumn>
+                    @*                 <RadzenDataGridColumn TItem="Paciente" Property="Telefono" Title="Telefono">
+                </RadzenDataGridColumn> *@
+                    <RadzenDataGridColumn TItem="Paciente" Filterable="false" Sortable="false" Width="100px" TextAlign="TextAlign.Center">
+                        <Template Context="paciente">
+
+                            <RadzenButton ButtonStyle="ButtonStyle.Warning" Icon="edit" Size="ButtonSize.Medium"
+                                          Shade="Shade.Lighter" Variant="Variant.Flat"
+                                          Click=@(args => GridEditButtonClick(args, paciente)) @onclick:stopPropagation="true" />
+
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Size="ButtonSize.Medium"
+                                          Shade="Shade.Lighter" Variant="Variant.Flat"
+                                          Click=@(args => GridDeleteButtonClick(args, paciente)) @onclick:stopPropagation="true" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+                <LoadingTemplate>
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Size="ProgressBarCircularSize.Small" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                </LoadingTemplate>
+            </RadzenDataGrid>
+
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenStack>
+
+
+@code {
+    [Inject]
+    protected IJSRuntime JSRuntime { get; set; }
+
+    [Inject]
+    protected NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    protected DialogService DialogService { get; set; }
+
+    [Inject]
+    protected TooltipService TooltipService { get; set; }
+
+    [Inject]
+    protected ContextMenuService ContextMenuService { get; set; }
+
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+
+    [Inject]
+    public dbService _dbService { get; set; }
+
+    [Inject]
+    public IService _service { get; set; }
+
+    protected IEnumerable<Paciente> pacientes;
+
+    protected RadzenDataGrid<Paciente> grid0;
+    protected int count;
+    bool isLoading = false;
+    protected async Task Grid0LoadData(LoadDataArgs args)
+    {
+        isLoading = true;
+        try
+        {
+            //var result = await _dbService.GetPacientes(filter: $"{args.Filter}", orderby: $"{args.OrderBy}", top: args.Top, skip: args.Skip, count:args.Top != null && args.Skip != null);
+            //pacientes = result.Value.AsODataEnumerable();
+            //count = result.Count;
+
+            var httpResponse = await _service.Get<List<Paciente>>($"api/pacientes");
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                pacientes = httpResponse.Response.Skip(args.Skip ?? 0).Take(args.Top ?? 10);
+                count = httpResponse.Response.Count;
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = $"Unable to load Pacientes" });
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    protected async Task AddButtonClick(MouseEventArgs args)
+    {
+        await DialogService.OpenAsync<AddPaciente>("Agregar Paciente", null);
+        await grid0.Reload();
+    }
+
+    protected async Task EditRow(Paciente args)
+    {
+        await DialogService.OpenAsync<EditPaciente>("Edit Paciente", new Dictionary<string, object> { { "IdPaciente", args.IdPaciente } });
+        await grid0.Reload();
+    }
+
+    protected async Task GridEditButtonClick(MouseEventArgs args, Paciente paciente)
+    {
+        await DialogService.OpenAsync<EditPaciente>("Edit Paciente", new Dictionary<string, object> { { "IdPaciente", paciente.IdPaciente } });
+        await grid0.Reload();
+    }
+
+    protected async Task GridDeleteButtonClick(MouseEventArgs args, Paciente paciente)
+    {
+        try
+        {
+            if (await DialogService.Confirm("¿Está seguro de que desea eliminar este registro?", "Confirmar", new ConfirmOptions() { OkButtonText = "OK", CancelButtonText = "CANCELAR" }) == true)
+            {
+                //var deleteResult = await _dbService.DeletePaciente(idPaciente: paciente.IdPaciente);
+                //if (deleteResult != null)
+                //{
+                //    await grid0.Reload();
+                //}
+                var httpResponse = await _service.Delete($"api/pacientes/{paciente.IdPaciente}");
+                if (httpResponse.Error)
+                {
+                    NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+                }
+                else
+                {
+                    NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = $"Se eliminó correctamente" });
+                    await grid0.Reload();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = $"Error",
+                Detail = $"No se puede eliminar Paciente"
+            });
+        }
+    }
+}

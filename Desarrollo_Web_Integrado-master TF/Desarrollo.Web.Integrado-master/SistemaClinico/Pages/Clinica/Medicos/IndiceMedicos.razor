@@ -1,0 +1,163 @@
+@page "/medicos"
+@attribute [Authorize]
+
+<PageTitle>Medicos</PageTitle>
+<RadzenStack>
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText Text="Medicos" TextStyle="TextStyle.H3" TagName="TagName.H1" style="margin: 0" />
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Icon="add_circle_outline" Text="Agregar" Click="@AddButtonClick" Variant="Variant.Flat" />
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn SizeMD=12>
+            <RadzenDataGrid @ref="grid0" ColumnWidth="200px" AllowFiltering="true" FilterMode="FilterMode.Advanced" AllowPaging="true" AllowSorting="true" ShowPagingSummary="true" PageSizeOptions=@(new int[] { 5, 10, 20, 30 })
+                            style="min-height: 150px" IsLoading=@isLoading
+                            PagerHorizontalAlign="HorizontalAlign.Right" PageSizeText=" por página"
+            Data="@(medicos)" LoadData="@Grid0LoadData" Count="@count" TItem="Medico" RowSelect="@EditRow">
+                <Columns>
+                    <RadzenDataGridColumn TItem="Medico" Property="IdMedico" Title="Id Medico">
+                    </RadzenDataGridColumn>
+                    @* <RadzenDataGridColumn TItem="Medico" Property="Estado" Title="Estado">
+                    </RadzenDataGridColumn> *@
+                   @*  <RadzenDataGridColumn TItem="Medico" Property="Empleado.ApMaterno" Title="Empleado">
+                    </RadzenDataGridColumn> *@
+                    <RadzenDataGridColumn TItem="Medico" Title="Apellidos y Nombres">
+                        <Template>
+                            @context.Empleado.ApPaterno @context.Empleado.ApMaterno @context.Empleado.Nombres
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Medico" Property="Especialidad.Descripcion" Title="Especialidad">
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Medico" Filterable="false" Sortable="false" Width="70px" TextAlign="TextAlign.Center">
+                        <Template Context="medico">
+
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Size="ButtonSize.Medium"
+                                          Shade="Shade.Lighter" Variant="Variant.Flat"
+                                          Click=@(args => GridDeleteButtonClick(args, medico)) @onclick:stopPropagation="true" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+                <LoadingTemplate>
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Size="ProgressBarCircularSize.Small" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                </LoadingTemplate>
+                <PagingSummaryTemplate>
+                    Página @context.CurrentPage de @context.NumberOfPages <b>(@context.TotalCount registros)</b>
+                </PagingSummaryTemplate>
+            </RadzenDataGrid>
+
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenStack>
+
+
+@code {
+    [Inject]
+    protected IJSRuntime JSRuntime { get; set; }
+
+    [Inject]
+    protected NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    protected DialogService DialogService { get; set; }
+
+    [Inject]
+    protected TooltipService TooltipService { get; set; }
+
+    [Inject]
+    protected ContextMenuService ContextMenuService { get; set; }
+
+    [Inject]
+    protected NotificationService NotificationService { get; set; }
+
+    [Inject]
+    public dbService _dbService { get; set; }
+    [Inject]
+    public IService _service { get; set; }
+    protected IEnumerable<Medico> medicos;
+
+    protected RadzenDataGrid<Medico> grid0;
+    protected int count;
+    bool isLoading = false;
+    protected async Task Grid0LoadData(LoadDataArgs args)
+    {
+         isLoading = true;
+        try
+        {
+            //var result = await _dbService.GetMedicos(filter: $"{args.Filter}", expand: "Empleado,Especialidad", orderby: $"{args.OrderBy}", top: args.Top, skip: args.Skip, count:args.Top != null && args.Skip != null);
+            //medicos = result.Value.AsODataEnumerable();
+            //count = result.Count;
+            var httpResponse = await _service.Get<List<Medico>>($"api/Medicos");
+            if (httpResponse.Error)
+            {
+                NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+            }
+            else
+            {
+                medicos = httpResponse.Response;
+                count = httpResponse.Response.Count;
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = $"Unable to load Medicos" });
+        }finally    
+        {
+            isLoading = false;
+        }
+    }
+
+    protected async Task AddButtonClick(MouseEventArgs args)
+    {
+        await DialogService.OpenAsync<AddMedico>("Agregar Medico", null);
+        await grid0.Reload();
+    }
+
+    protected async Task EditRow(Medico args)
+    {
+        await DialogService.OpenAsync<EditMedico>("Edit Medico", new Dictionary<string, object> { { "IdMedico", args.IdMedico } });
+        await grid0.Reload();
+    }
+
+    protected async Task GridDeleteButtonClick(MouseEventArgs args, Medico medico)
+    {
+        try
+        {
+            // DialogService.Confirm("Are you sure?", "MyTitle", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" })
+
+            if (await DialogService.Confirm("¿Está seguro de que desea eliminar este registro?", "Confirmar", new ConfirmOptions() { OkButtonText = "OK", CancelButtonText = "CANCELAR" }) == true)
+            {
+                // var deleteResult = await _dbService.DeleteMedico(idMedico: medico.IdMedico);
+
+                // if (deleteResult != null)
+                // {
+                //     await grid0.Reload();
+                // }
+
+                var httpResponse = await _service.Delete($"api/medicos/{medico.IdMedico}");
+                if (httpResponse.Error)
+                {
+                    NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = $"Error", Detail = await httpResponse.ObtenerMensajeError() });
+                }
+                else
+                {
+                    NotificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = $"Se eliminó correctamente" });
+                    await grid0.Reload();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = $"Error",
+                Detail = $"No se puede eliminar Medico"
+            });
+        }
+    }
+}
